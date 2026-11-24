@@ -9,15 +9,21 @@ namespace {
 
 std::uint32_t backingAllocations = 0;
 std::uint32_t backingFrees = 0;
+bool failBackingAllocation = false;
 
 void* Allocate(std::size_t size, std::uint64_t attributes) {
-    AnyBox::Tests::Require(size == 0x100000 && attributes == 0x12340000, "APU backing allocation arguments changed");
     ++backingAllocations;
+    AnyBox::Tests::Require(size == AnyBox::Tests::ApuCachedSize + AnyBox::Tests::ApuNonCachedSize, "APU backing size ignored either heap partition");
+    AnyBox::Tests::Require(attributes == 0, "APU backing allocation attributes changed");
+    if (failBackingAllocation) {
+        failBackingAllocation = false;
+        return nullptr;
+    }
     return static_cast<std::byte*>(::operator new(size + 16, std::align_val_t{0x10000})) + 16;
 }
 
 void Free(void* memory, std::uint64_t attributes) {
-    AnyBox::Tests::Require(attributes == 0x12340000, "APU backing free attributes changed");
+    AnyBox::Tests::Require(attributes == 0, "APU backing free attributes changed");
     ++backingFrees;
     ::operator delete(static_cast<std::byte*>(memory) - 16, std::align_val_t{0x10000});
 }
@@ -38,17 +44,21 @@ int main() {
         using namespace AnyBox::Tests;
         Require(!ApuIsVirtualAddressValid(nullptr, 64), "Null APU address is valid");
         Require(ApuMapVirtualAddress(nullptr) == 0 && ApuMapApuAddress(0) == nullptr, "Null APU translations changed");
-        void* output = nullptr;
-        ExpectException<std::logic_error>([&] { ApuAlloc(&output, nullptr, 64, 64, 0); });
+        Require(backingAllocations == 0, "Null APU queries initialized the heap");
         ExpectException<std::invalid_argument>([] { ApuCreateHeap(0, 0); });
         Require(backingAllocations == 0, "Rejected APU heap allocated storage");
-        Require(ApuCreateHeap(0x100000, 0x12340000) == 0, "APU heap creation failed");
-        ExpectException<std::logic_error>([] { ApuCreateHeap(0x100000, 0x12340000); });
+        failBackingAllocation = true;
+        ExpectException<std::bad_alloc>([] { ApuCreateHeap(ApuCachedSize, ApuNonCachedSize); });
+        Require(backingAllocations == 1 && backingFrees == 0, "Failed APU backing allocation was not contained");
+        Require(ApuCreateHeap(ApuCachedSize, ApuNonCachedSize) == 0, "APU heap creation did not recover after failure");
+        Require(backingAllocations == 2, "APU heap did not commit both partitions in one backing region");
+        ExpectException<std::logic_error>([] { ApuCreateHeap(ApuCachedSize, ApuNonCachedSize); });
+        Require(backingAllocations == 2, "Duplicate APU heap creation allocated storage");
         CheckAllocation();
         CheckMapping();
         CheckErrors();
         CheckConcurrency();
-        Require(backingAllocations == 1 && backingFrees == 0, "APU heap backing lifetime changed");
+        Require(backingAllocations == 2 && backingFrees == 0, "APU heap backing lifetime changed");
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
