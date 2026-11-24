@@ -1,5 +1,6 @@
 #include "Tests.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -45,6 +46,9 @@ int main() {
         Require(!ApuIsVirtualAddressValid(nullptr, 64), "Null APU address is valid");
         Require(ApuMapVirtualAddress(nullptr) == 0 && ApuMapApuAddress(0) == nullptr, "Null APU translations changed");
         Require(backingAllocations == 0, "Null APU queries initialized the heap");
+        std::array<std::byte, 64> stackAddress{};
+        Require(!ApuIsVirtualAddressValid(stackAddress.data(), 64), "Ordinary storage was valid before APU heap creation");
+        Require(backingAllocations == 0, "APU validity query initialized the heap");
         ExpectException<std::invalid_argument>([] { ApuCreateHeap(0, 0); });
         Require(backingAllocations == 0, "Rejected APU heap allocated storage");
         failBackingAllocation = true;

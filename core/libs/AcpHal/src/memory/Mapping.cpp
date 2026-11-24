@@ -13,8 +13,8 @@ const AnyBox::AcpHal::Heap::Block* AnyBox::AcpHal::Heap::FindAllocated(const Sta
 
 bool AnyBox::AcpHal::Heap::IsValid(const void* address, std::uint32_t physicalAlignment) {
     if (!address) return false;
-    EnsureCreated();
     std::lock_guard lock(mutex);
+    if (!state) return false;
     auto value = reinterpret_cast<std::uintptr_t>(address);
     auto baseValue = reinterpret_cast<std::uintptr_t>(state->memory);
     if (value < baseValue || value - baseValue >= state->memorySize) return false;
