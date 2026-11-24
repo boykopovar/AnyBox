@@ -7,7 +7,7 @@
 namespace AnyBox::Vulkan {
 class ComputePipeline {
 public:
-    ComputePipeline(Context& context, std::span<const std::uint32_t> code, std::uint32_t pushConstantSize, const char* entryPoint = "main", std::span<const VkDescriptorSetLayout> descriptorLayouts = {});
+    ComputePipeline(Context& context, std::span<const std::uint32_t> code, std::uint32_t pushConstantSize, const char* entryPoint = "main", std::span<const VkDescriptorSetLayout> descriptorLayouts = {}, std::uint32_t requiredSubgroupSize = 0);
     ~ComputePipeline();
     ComputePipeline(const ComputePipeline&) = delete;
     ComputePipeline& operator=(const ComputePipeline&) = delete;

@@ -1,10 +1,11 @@
 #include <anybox/vulkan/ComputePipeline.hpp>
 
-AnyBox::Vulkan::ComputePipeline::ComputePipeline(Context& context, std::span<const std::uint32_t> code, std::uint32_t pushConstantSize, const char* entryPoint, std::span<const VkDescriptorSetLayout> descriptorLayouts) : context(context), pushConstantSize(pushConstantSize), descriptorSetCount(static_cast<std::uint32_t>(descriptorLayouts.size())) {
+AnyBox::Vulkan::ComputePipeline::ComputePipeline(Context& context, std::span<const std::uint32_t> code, std::uint32_t pushConstantSize, const char* entryPoint, std::span<const VkDescriptorSetLayout> descriptorLayouts, std::uint32_t requiredSubgroupSize) : context(context), pushConstantSize(pushConstantSize), descriptorSetCount(static_cast<std::uint32_t>(descriptorLayouts.size())) {
     if (code.size() < 5 || code.front() != 0x07230203 || !entryPoint || *entryPoint == '\0') throw std::invalid_argument("Vulkan compute shader code or entry point is invalid");
     if (pushConstantSize % 4 != 0 || pushConstantSize > context.GetProperties().limits.maxPushConstantsSize) throw std::invalid_argument("Vulkan compute push constant size is invalid");
     if (descriptorLayouts.size() > context.GetProperties().limits.maxBoundDescriptorSets) throw std::invalid_argument("Vulkan compute descriptor set count exceeds the device limit");
     for (auto value : descriptorLayouts) if (!value) throw std::invalid_argument("Vulkan compute descriptor set layout is null");
+    if (requiredSubgroupSize && !context.CanRequireComputeSubgroupSize(requiredSubgroupSize)) throw std::invalid_argument("Required Vulkan compute subgroup size is unsupported");
     const auto& functions = context.GetFunctions();
     VkShaderModule module = VK_NULL_HANDLE;
     try {
@@ -23,9 +24,13 @@ AnyBox::Vulkan::ComputePipeline::ComputePipeline(Context& context, std::span<con
         layoutInfo.pPushConstantRanges = pushConstantSize == 0 ? nullptr : &range;
         Check(functions.createPipelineLayout(context.GetDevice(), &layoutInfo, nullptr, &layout), "Create Vulkan compute pipeline layout");
 
+        VkPipelineShaderStageRequiredSubgroupSizeCreateInfo subgroup{};
+        subgroup.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_REQUIRED_SUBGROUP_SIZE_CREATE_INFO;
+        subgroup.requiredSubgroupSize = requiredSubgroupSize;
         VkComputePipelineCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
         info.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+        if (requiredSubgroupSize) info.stage.pNext = &subgroup;
         info.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
         info.stage.module = module;
         info.stage.pName = entryPoint;

@@ -1,5 +1,4 @@
 #include "Device.hpp"
-#include "../pipeline/Shader.hpp"
 #include "../pipeline/State.hpp"
 #include "../pipeline/Offline.hpp"
 #include <memory>
@@ -28,7 +27,7 @@ HRESULT AnyBox::Graphics::Device::CreateComputePipelineStateX(Device* self, cons
     if ((static_cast<std::uint32_t>(description->Flags) & ~toolDebugFlag) != 0) throw std::invalid_argument("Compute pipeline flags are unsupported");
     if (!description->CS.pShaderBytecode || description->CS.BytecodeLength == 0) throw std::invalid_argument("Compute shader bytecode is empty");
     auto code = std::span(static_cast<const std::byte*>(description->CS.pShaderBytecode), description->CS.BytecodeLength);
-    ValidateComputeShader(*self, code);
+    auto prepared = RequiresPreparedCompute(*self, code);
     std::unique_ptr<RootSignature, RootDeleter> embedded;
     RootSignature* root;
     if (description->pRootSignature) root = RootSignature::From(description->pRootSignature, self);
@@ -39,7 +38,7 @@ HRESULT AnyBox::Graphics::Device::CreateComputePipelineStateX(Device* self, cons
         root = embedded.get();
     }
 
-    if (RequiresPreparedCompute(*self, code)) {
+    if (prepared) {
         auto offline = std::make_unique<OfflinePipeline>(*self, *root, LoadPreparedCompute(code));
         *pipeline = new PipelineState(std::move(offline), self, root);
         return S_OK;
