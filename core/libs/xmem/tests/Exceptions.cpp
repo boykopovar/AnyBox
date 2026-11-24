@@ -1,6 +1,12 @@
 #include <xmem.hpp>
 #include <anybox/ExceptionTest.hpp>
 
+#include <type_traits>
+
+static_assert(std::is_same_v<decltype(&XMemAllocatePhysicalPages), std::int32_t(*)(std::uint64_t, std::size_t*, std::uint64_t*)>);
+static_assert(std::is_same_v<decltype(&XMemFreePhysicalPages), std::int32_t(*)(std::size_t, const std::uint64_t*)>);
+static_assert(std::is_same_v<decltype(&XMemVirtualAlloc), void*(*)(void*, std::size_t, std::uint32_t, std::uint64_t, std::uint32_t)>);
+
 int main() {
     return AnyBox::Tests::Run([] {
         std::size_t pageCount = 1;

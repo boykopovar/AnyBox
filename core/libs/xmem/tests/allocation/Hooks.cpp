@@ -1,6 +1,7 @@
 #include <xmem.hpp>
 
 #include <array>
+#include <barrier>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -60,8 +61,10 @@ int main() {
     try {
         std::array<std::exception_ptr, 8> errors{};
         std::array<std::jthread, 8> threads;
+        std::barrier start(static_cast<std::ptrdiff_t>(threads.size() + 1));
         for (std::size_t i = 0; i < threads.size(); ++i) {
-            threads[i] = std::jthread([&errors, i] {
+            threads[i] = std::jthread([&errors, &start, i] {
+                start.arrive_and_wait();
                 try {
                     Check();
                 } catch (...) {
@@ -69,6 +72,7 @@ int main() {
                 }
             });
         }
+        start.arrive_and_wait();
         Check();
         for (auto& thread : threads) thread.join();
         for (const auto& error : errors) if (error) std::rethrow_exception(error);

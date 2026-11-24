@@ -10,9 +10,27 @@ Seven system libraries with a total of 39 functions required by the test title a
 
 Unimplemented functions throw a C++ exception. Cross-library stack unwinding and destructor execution are verified by tests. The title reaches an unimplemented function and terminates with an unhandled MSVC-compatible C++ exception; its call stack is visible in the debugger. Destructor execution during unwinding through the title's code has not been verified.
 
+APU memory uses ordinary host memory with cached and non-cached partitions, synthetic 32-bit APU addresses, and lazy default heap creation. This models the memory API; it does not emulate audio-processing hardware or host cache behavior.
+
 ## Building
 
 AnyBox uses standard C++20 and can be built with any conforming compiler targeting 64-bit Windows. MSVC or `clang-cl` with the MSVC runtime is recommended for ABI compatibility and correct stack unwinding of diagnostic C++ exceptions through title code.
+
+To build and test with Visual Studio:
+
+```powershell
+cmake -S . -B build -A x64 -DBUILD_TESTING=ON
+cmake --build build --config Debug --parallel
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+To build and test with MinGW-w64:
+
+```powershell
+cmake -S . -B build-mingw -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON
+cmake --build build-mingw --parallel
+ctest --test-dir build-mingw -C Debug --output-on-failure
+```
 
 ## Disclaimer
 
