@@ -5,6 +5,8 @@
 #include <string>
 
 namespace AnyBox::Shader {
+inline constexpr std::uint32_t PreparedComputeWaveSize = 32;
+
 using ShaderDigest = std::array<std::byte, 32>;
 ShaderDigest HashShader(std::span<const std::byte> data);
 std::string DigestName(const ShaderDigest& digest);
@@ -21,7 +23,7 @@ struct ComputeArtifact {
     std::uint32_t runtimeVersion = 14;
     std::uint32_t bdaVersion = 1;
     std::array<std::uint32_t, 3> threads{};
-    std::uint32_t waveSize = 32;
+    std::uint32_t waveSize = PreparedComputeWaveSize;
     std::uint32_t sharedMemoryBytes = 0;
     std::uint32_t pushConstantOffset = 0;
     std::uint32_t pushConstantSize = 0;

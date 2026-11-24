@@ -24,6 +24,7 @@ public:
     const DeviceFunctions& GetFunctions() const noexcept { return deviceFunctions; }
     const VkPhysicalDeviceProperties& GetProperties() const noexcept { return properties; }
     const VkPhysicalDeviceSubgroupProperties& GetSubgroupProperties() const noexcept { return subgroups; }
+    bool CanRequireComputeSubgroupSize(std::uint32_t size, std::uint64_t workgroupInvocations = 1) const noexcept;
     const VkPhysicalDeviceFloatControlsProperties& GetFloatControls() const noexcept { return floatControls; }
     const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const noexcept { return memoryProperties; }
     VkDeviceSize GetHostPointerAlignment() const noexcept { return hostPointerAlignment; }
@@ -55,6 +56,7 @@ private:
     DeviceFunctions deviceFunctions{};
     VkPhysicalDeviceProperties properties{};
     VkPhysicalDeviceSubgroupProperties subgroups{};
+    VkPhysicalDeviceSubgroupSizeControlProperties subgroupSizeLimits{};
     VkPhysicalDeviceFloatControlsProperties floatControls{};
     VkPhysicalDeviceMemoryProperties memoryProperties{};
     VkDeviceSize hostPointerAlignment = 0;
@@ -64,5 +66,7 @@ private:
     AdapterLuid adapterLuid{};
     bool cubeArrays = false;
     bool byteStorage = false;
+    bool subgroupSizeExtension = false;
+    bool subgroupSizeControl = false;
 };
 }
