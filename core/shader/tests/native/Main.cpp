@@ -11,6 +11,8 @@ void CheckNativeVertex();
 void CheckNativeFloatingProfile();
 void CheckNativeRootArguments();
 void CheckNativeGraphicsRootArguments();
+void CheckNativeDirectResources();
+void CheckNativeGraphicsCompilation();
 void CheckNativeFlow();
 void CheckNativeScratchWrites();
 void CheckNativeImages();
@@ -31,6 +33,8 @@ int main() {
         CheckNativeFloatingProfile();
         CheckNativeRootArguments();
         CheckNativeGraphicsRootArguments();
+        CheckNativeDirectResources();
+        CheckNativeGraphicsCompilation();
         CheckNativeFlow();
         CheckNativeScratchWrites();
         CheckNativeImages();
