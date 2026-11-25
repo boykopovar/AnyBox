@@ -1,5 +1,6 @@
 #include "Binding.hpp"
 #include <stdexcept>
+#include <string>
 
 void AnyBox::Shader::ValidateNativeComputeRootLayout(const Graphics::Container::RootSignatureLayout& layout) {
     if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native compute root signature version or flags are invalid");
@@ -30,7 +31,11 @@ void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSi
             auto stride = range.kind == RootRangeKind::Sampler ? 4u : 8u;
             found |= (offset + binding.shaderRegister - range.firstRegister) * stride == binding.tableOffset;
         }
-        if (!found) throw std::invalid_argument("Native descriptor table binding has no matching register and offset");
+        if (!found) {
+            auto detail = "Native descriptor table binding has no matching register and offset: parameter=" + std::to_string(binding.rootParameter) + " register=" + std::to_string(binding.shaderRegister) + " offset=" + std::to_string(binding.tableOffset);
+            for (const auto& range : parameter.ranges) detail += " range(kind=" + std::to_string(static_cast<unsigned>(range.kind)) + ",register=" + std::to_string(range.firstRegister) + ",count=" + std::to_string(range.count) + ",offset=" + std::to_string(range.tableOffset) + ")";
+            throw std::invalid_argument(detail);
+        }
         return;
     }
     if (binding.tableOffset != 0 || binding.shaderRegister != parameter.shaderRegister) throw std::invalid_argument("Native direct root binding register or offset disagrees with its signature");
