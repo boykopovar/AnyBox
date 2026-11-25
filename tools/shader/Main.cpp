@@ -4,6 +4,7 @@
 #include "Compilation.hpp"
 #include "Files.hpp"
 #include "Prepare.hpp"
+#include "Serialized.hpp"
 #include "graphics/Options.hpp"
 #include <anybox/shader/Resources.hpp>
 #include <anybox/shader/Compute.hpp>
@@ -13,6 +14,11 @@
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 3 && std::string_view(argv[1]) == "--serialized-info") {
+            std::cout << AnyBox::Shader::Tools::InspectSerializedCompute(AnyBox::Shader::Tools::ReadInput(argv[2]));
+            if (!std::cout) throw std::runtime_error("Cannot write serialized pipeline information");
+            return 0;
+        }
         if (argc >= 2 && (std::string_view(argv[1]) == "--prepare-graphics" || std::string_view(argv[1]) == "--verify-graphics")) {
             std::vector<std::string_view> arguments(argv + 2, argv + argc);
             AnyBox::Shader::Tools::PrepareGraphics(AnyBox::Shader::Tools::ParseGraphicsOptions(arguments), std::string_view(argv[1]) == "--verify-graphics");

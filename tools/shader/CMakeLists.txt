@@ -1,6 +1,8 @@
 add_executable(anybox_shader Main.cpp)
 target_sources(anybox_shader PRIVATE AuditCompile.cpp AuditStream.cpp BinaryInput.cpp)
 target_sources(anybox_shader PRIVATE NativeAudit.cpp NativeCode.cpp)
+
+target_sources(anybox_shader PRIVATE Serialized.cpp)
 target_sources(anybox_shader PRIVATE Compile.cpp Artifact.cpp)
 target_sources(anybox_shader PRIVATE CompileNative.cpp)
 target_sources(anybox_shader PRIVATE Files.cpp)
