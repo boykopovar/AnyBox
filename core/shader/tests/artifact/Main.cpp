@@ -7,6 +7,8 @@
 
 using namespace AnyBox::Shader;
 
+void CheckGraphicsArtifacts();
+
 namespace {
 void Require(bool condition) {
     if (!condition) throw std::runtime_error("Shader artifact test failed");
@@ -102,4 +104,4 @@ void Check() {
 }
 }
 
-int main() { return AnyBox::Tests::Run(Check); }
+int main() { return AnyBox::Tests::Run([] { Check(); CheckGraphicsArtifacts(); }); }

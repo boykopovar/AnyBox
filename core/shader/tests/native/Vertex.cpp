@@ -1,4 +1,5 @@
 #include <anybox/shader/NativeVertex.hpp>
+#include <anybox/shader/ShaderArtifactBuilder.hpp>
 #include "../buffer/Target.hpp"
 #include "NativeFixtures.hpp"
 #include <array>
@@ -48,6 +49,9 @@ void CheckNativeVertex() {
             offset += count;
         }
         Require(vertex && vertexIndex && parameter);
+        GraphicsArtifactKey key{GraphicsArtifactStage::Vertex, HashShader(data), HashShader({})};
+        auto artifact = MakeGraphicsArtifact(std::move(compiled), key, wide ? 64u : 32u, target.subgroupSize);
+        Require(DecodeGraphicsArtifact(EncodeGraphicsArtifact(artifact), key) == artifact);
         auto state = AnyBox::Graphics::Container::ReadNativeStageState(data);
         NativeFrontend frontend(data);
         auto lowered = LowerNativeVertex(frontend, state, input, 0, target);

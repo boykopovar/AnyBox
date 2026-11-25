@@ -1,5 +1,6 @@
 #include <anybox/shader/NativePixel.hpp>
 #include <anybox/shader/NativeLinkage.hpp>
+#include <anybox/shader/ShaderArtifactBuilder.hpp>
 #include "../buffer/Target.hpp"
 #include "NativeFixtures.hpp"
 #include <array>
@@ -75,6 +76,9 @@ void CheckNativePixel() {
             offset += count;
         }
         Require(fragment && output);
+        GraphicsArtifactKey key{GraphicsArtifactStage::Pixel, HashShader(data), HashShader({})};
+        auto artifact = MakeGraphicsArtifact(std::move(compiled), key, wide ? 64u : 32u, target.subgroupSize);
+        Require(DecodeGraphicsArtifact(EncodeGraphicsArtifact(artifact), key) == artifact);
         auto state = AnyBox::Graphics::Container::ReadNativeStageState(data);
         NativeFrontend frontend(data);
         auto lowered = LowerNativePixel(frontend, state, input, 0, target);

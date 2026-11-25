@@ -1,9 +1,13 @@
 add_library(anybox_shader_artifact STATIC src/artifact/Hash.cpp src/artifact/Encode.cpp src/artifact/Decode.cpp src/artifact/Validate.cpp)
+target_sources(anybox_shader_artifact PRIVATE src/artifact/ShaderValidate.cpp src/artifact/Metadata.cpp)
+target_sources(anybox_shader_artifact PRIVATE src/artifact/ResourceWrite.cpp src/artifact/ResourceRead.cpp)
+target_sources(anybox_shader_artifact PRIVATE src/artifact/graphics/Encode.cpp src/artifact/graphics/Decode.cpp src/artifact/graphics/Validate.cpp)
 target_link_libraries(anybox_shader_artifact PUBLIC anybox_options PRIVATE anybox_common bcrypt)
 target_include_directories(anybox_shader_artifact PUBLIC include)
 
 if(BUILD_TESTING)
     add_executable(shader_artifact_tests tests/artifact/Main.cpp)
+    target_sources(shader_artifact_tests PRIVATE tests/artifact/Graphics.cpp)
     target_link_libraries(shader_artifact_tests PRIVATE anybox_shader_artifact anybox_test_support)
     target_link_libraries(shader_artifact_tests PRIVATE anybox_vulkan_test_support)
     target_include_directories(shader_artifact_tests PRIVATE ../graphics/vulkan/tests)
