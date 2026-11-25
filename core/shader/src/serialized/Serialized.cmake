@@ -1,10 +1,12 @@
 add_library(anybox_serialized_shader STATIC src/serialized/Graphics.cpp)
+target_sources(anybox_serialized_shader PRIVATE src/serialized/PixelInput.cpp)
 target_link_libraries(anybox_serialized_shader PUBLIC anybox_native_shader anybox_shader_plan PRIVATE anybox_options)
 target_include_directories(anybox_serialized_shader PUBLIC include)
 
 if(BUILD_TESTING)
     add_executable(shader_serialized_graphics_tests tests/serialized/Main.cpp)
     target_sources(shader_serialized_graphics_tests PRIVATE tests/native/Validation.cpp)
+    target_sources(shader_serialized_graphics_tests PRIVATE tests/serialized/PixelInput.cpp)
     target_include_directories(shader_serialized_graphics_tests PRIVATE ../graphics/container/tests)
     target_link_libraries(shader_serialized_graphics_tests PRIVATE anybox_serialized_shader anybox_test_support SPIRV-Tools-static)
     target_compile_definitions(shader_serialized_graphics_tests PRIVATE ANYBOX_LIBRARY_NAME="shader_serialized_graphics")

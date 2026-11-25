@@ -1,4 +1,4 @@
-#include <anybox/shader/NativePixel.hpp>
+#include "../serialized/Fixture.hpp"
 #include <anybox/shader/ShaderArtifactBuilder.hpp>
 #include <anybox/shader/runtime/GraphicsProgram.hpp>
 #include <anybox/vulkan/Framebuffer.hpp>
@@ -18,16 +18,15 @@ void DrawInterpolation(AnyBox::Vulkan::Context& context, bool linear, std::uint3
     using namespace Vulkan::Tests;
     auto target = BufferTests::Target();
     target.subgroupSize = context.GetSubgroupProperties().subgroupSize;
-    ShaderPixelInputInfo input;
-    input.inputNum = 1;
-    input.targetOutputMode[0] = 1;
-    input.psInputVgpr[static_cast<std::uint32_t>(linear ? PixelInput::LinearCenter : PixelInput::PerspectiveCenter)] = 0;
+    SerializedGraphicsTests::StageFixture fixture(true);
+    fixture.graphics.Context(0, PixelInputBit(linear ? PixelInput::LinearCenter : PixelInput::PerspectiveCenter));
+    fixture.graphics.Context(24, 1);
     std::array<std::uint32_t, 5> words{0xC8080000, 0xC8090001, 0xF8001801, 2, 0xBF810000};
-    NativeFrontend frontend(std::as_bytes(std::span(words)), wave);
-    Graphics::Container::NativeStageState native{Graphics::Container::NativeHardwareStage::Pixel, 0xC0, true, false};
-    auto translated = LowerNativePixel(frontend, native, input, 0, target);
-    auto compiled = CompilePixel(translated, input, target, {0, 0, 0, 128});
-    auto pixel = MakeGraphicsArtifact(std::move(compiled), {GraphicsArtifactStage::Pixel, {}, {}}, wave, target.subgroupSize);
+    for (std::size_t index = 0; index < words.size(); ++index) Fixtures::Set(fixture.code, 36 + index * 4, words[index]);
+    Fixtures::Set(fixture.metadata, 8, 14);
+    Graphics::Container::RootSignatureLayout root{2, 0, 0, {}};
+    auto compiled = CompileSerializedPixel(fixture.Source(wave), fixture.graphics.auxiliary, root, target);
+    auto pixel = MakeGraphicsArtifact(std::move(compiled.shader), {GraphicsArtifactStage::Pixel, {}, {}}, wave, target.subgroupSize);
     GraphicsArtifact vertex;
     vertex.waveSize = vertex.hostSubgroupSize = target.subgroupSize;
     auto qualifier = linear ? "noperspective" : "smooth";

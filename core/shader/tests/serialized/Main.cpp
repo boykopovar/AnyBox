@@ -5,9 +5,11 @@
 #include <anybox/ExceptionTest.hpp>
 
 void CheckSpirvValidation(std::span<const std::uint32_t> code);
+void CheckSerializedPixelInput();
 
 namespace {
 void CheckStages() {
+    CheckSerializedPixelInput();
     using namespace AnyBox::Shader;
     using namespace AnyBox::Graphics::Container;
     using namespace ShaderRecompiler;

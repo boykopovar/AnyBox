@@ -16,6 +16,10 @@ std::int32_t Integer(std::string_view text) {
 }
 
 bool AnyBox::Shader::Tools::RunSerializedGraphicsCommand(std::span<const std::string_view> arguments) {
+    if (!arguments.empty() && arguments[0] == "--serialized-pixel-audit") {
+        AuditSerializedPixel(arguments);
+        return true;
+    }
     if (arguments.empty() || arguments[0] != "--serialized-vertex-audit") return false;
     if (arguments.size() != 8) throw std::invalid_argument("Usage: --serialized-vertex-audit <state> <code> <metadata> <root> <wave> <vertex-offset-sgpr> <instance-offset-sgpr>");
     auto state = ReadInput(arguments[1]);
