@@ -9,6 +9,12 @@ void CheckGraphicsWaveProof(std::span<const std::uint32_t> code, std::uint32_t w
     auto other = target;
     other.subgroupSize = waveSize == 64 ? 32 : 64;
     ValidateGraphicsWave(code, waveSize, other);
+    for (auto image : {spv::CapabilitySampled1D, spv::CapabilityImage1D, spv::CapabilitySampledCubeArray, spv::CapabilityImageCubeArray, spv::CapabilitySampledBuffer, spv::CapabilityImageBuffer, spv::CapabilityImageMSArray, spv::CapabilityStorageImageMultisample, spv::CapabilityStorageImageExtendedFormats, spv::CapabilityStorageImageReadWithoutFormat, spv::CapabilityStorageImageWriteWithoutFormat, spv::CapabilityImageQuery, spv::CapabilityImageGatherExtended, spv::CapabilityDerivativeControl, spv::CapabilityInterpolationFunction, spv::CapabilitySampleRateShading}) {
+        std::vector<std::uint32_t> independent(code.begin(), code.end());
+        std::array<std::uint32_t, 2> declaration{(2u << 16) | spv::OpCapability, static_cast<std::uint32_t>(image)};
+        independent.insert(independent.begin() + 5, declaration.begin(), declaration.end());
+        ValidateGraphicsWave(independent, waveSize, other);
+    }
     std::vector<std::uint32_t> subgroup(code.begin(), code.end());
     std::array<std::uint32_t, 2> capability{(2u << 16) | spv::OpCapability, spv::CapabilityGroupNonUniform};
     subgroup.insert(subgroup.begin() + 5, capability.begin(), capability.end());

@@ -24,6 +24,22 @@ bool LocalCapability(std::uint32_t capability) {
     case spv::CapabilitySignedZeroInfNanPreserve:
     case spv::CapabilityRoundingModeRTE:
     case spv::CapabilityRoundingModeRTZ:
+    case spv::CapabilitySampled1D:
+    case spv::CapabilityImage1D:
+    case spv::CapabilitySampledCubeArray:
+    case spv::CapabilityImageCubeArray:
+    case spv::CapabilitySampledBuffer:
+    case spv::CapabilityImageBuffer:
+    case spv::CapabilityImageMSArray:
+    case spv::CapabilityStorageImageMultisample:
+    case spv::CapabilityStorageImageExtendedFormats:
+    case spv::CapabilityStorageImageReadWithoutFormat:
+    case spv::CapabilityStorageImageWriteWithoutFormat:
+    case spv::CapabilityImageQuery:
+    case spv::CapabilityImageGatherExtended:
+    case spv::CapabilityDerivativeControl:
+    case spv::CapabilityInterpolationFunction:
+    case spv::CapabilitySampleRateShading:
         return true;
     default:
         return false;
