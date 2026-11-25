@@ -1,16 +1,10 @@
 #pragma once
 
+#include "Hardware.hpp"
 #include <cstdint>
 #include <span>
 
 namespace AnyBox::Address {
-struct HardwareConfiguration {
-    std::uint32_t engine;
-    std::uint32_t family;
-    std::uint32_t revision;
-    std::uint32_t addressConfiguration;
-};
-
 struct SurfaceDescription {
     std::uint32_t width = 0;
     std::uint32_t height = 0;
@@ -59,15 +53,35 @@ struct SurfaceLayout {
     bool mipChainInTail;
 };
 
+struct ElementCoordinate {
+    std::uint32_t x = 0;
+    std::uint32_t y = 0;
+    std::uint32_t slice = 0;
+    std::uint32_t mip = 0;
+    std::uint32_t sample = 0;
+};
+struct ElementOffset { std::uint64_t address; std::uint32_t bitPosition; };
+struct SurfaceCopy {
+    std::uint32_t mip;
+    std::uint32_t slice;
+    std::uint64_t rowPitch;
+    std::uint64_t slicePitch;
+};
+
 class Context {
 public:
     explicit Context(const HardwareConfiguration& hardware);
     ~Context();
     Context(const Context&) = delete;
     Context& operator=(const Context&) = delete;
+    ElementOffset GetOffset(const SurfaceDescription& description, const ElementCoordinate& coordinate) const;
+    void CopyToSurface(const SurfaceDescription& description, void* surface, const void* memory, const SurfaceCopy& copy) const;
+    void CopyFromSurface(const SurfaceDescription& description, void* memory, const void* surface, const SurfaceCopy& copy) const;
     SurfaceLayout Compute(const SurfaceDescription& description, std::span<MipLayout> mips = {}) const;
 
 private:
+    void copySurface(const SurfaceDescription& description, void* surface, void* memory, const SurfaceCopy& copy, bool toSurface) const;
     void* handle = nullptr;
+    bool surfaceCopy;
 };
 }

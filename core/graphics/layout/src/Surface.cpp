@@ -1,7 +1,10 @@
 #include <anybox/layout/Texture.hpp>
 
+const AnyBox::Address::Context& AnyBox::Layout::GetTextureAddressContext() {
+    static const Address::Context context(Address::SeriesXHardware);
+    return context;
+}
+
 AnyBox::Address::SurfaceLayout AnyBox::Layout::ComputeTextureSurface(const TextureDescription& description, std::span<Address::MipLayout> mips) {
-    auto input = DescribeTextureSurface(description);
-    static const Address::Context context({13, 0x8F, 0x28, 0});
-    return context.Compute(input, mips);
+    return GetTextureAddressContext().Compute(DescribeTextureSurface(description), mips);
 }

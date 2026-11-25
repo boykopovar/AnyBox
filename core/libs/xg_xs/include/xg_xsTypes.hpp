@@ -3,7 +3,7 @@
 
 #include <anybox/layout/Description.hpp>
 
-struct IXGTextureComputer;
+#include <xg_xsComputer.hpp>
 
 using XGTextureDescription = AnyBox::Layout::TextureDescription;
 

@@ -1,11 +1,6 @@
 #include <xg_xs.hpp>
-#include <anybox/Unimplemented.hpp>
 #include <anybox/layout/Texture.hpp>
 #include <stdexcept>
-
-std::int32_t XGCreateTextureComputer(const XGTextureDescription*, IXGTextureComputer**) noexcept(false) {
-    ANYBOX_NOT_IMPLEMENTED();
-}
 
 std::int32_t XGSuggestSwizzleMode(const XGTextureDescription* description, std::uint32_t flags, std::uint32_t* swizzleMode) noexcept(false) {
     if (!description || !swizzleMode) throw std::invalid_argument("Texture swizzle suggestion arguments are null");

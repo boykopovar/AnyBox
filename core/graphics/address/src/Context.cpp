@@ -14,7 +14,7 @@ ADDR_E_RETURNCODE Free(const ADDR_FREESYSMEM_INPUT* input) {
 }
 }
 
-AnyBox::Address::Context::Context(const HardwareConfiguration& hardware) {
+AnyBox::Address::Context::Context(const HardwareConfiguration& hardware) : surfaceCopy(hardware == SeriesXHardware) {
     ADDR_CREATE_INPUT input{};
     input.size = sizeof(input);
     input.chipEngine = hardware.engine;

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <stdexcept>
 
+void CheckUnsupportedCopyProfile(const AnyBox::Address::Context& context);
+
 namespace {
 void CheckMipChain(const AnyBox::Address::Context& context, AnyBox::Address::SurfaceDescription description) {
     description.width = 1024;
@@ -48,6 +50,7 @@ int main() {
         if (layout.size != 33423360 || layout.alignment != 65536 || layout.pixelPitch != 3840 || layout.pixelHeight != 2176) throw std::runtime_error("GFX10 surface does not match its expected block geometry");
         if (mips[0].offset != 0 || mips[0].pixelPitch != layout.pixelPitch || mips[0].pixelHeight != layout.pixelHeight) throw std::runtime_error("GFX10 mip layout does not match its allocation");
         CheckMipChain(context, description);
+        CheckUnsupportedCopyProfile(context);
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
