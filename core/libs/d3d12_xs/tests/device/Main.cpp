@@ -4,6 +4,8 @@
 #include <xmem.hpp>
 #include <optional>
 
+void CheckGraphicsCache();
+
 int main(int argc, char** argv) {
     return AnyBox::Tests::Run([&] {
         using namespace AnyBox::Graphics;
@@ -69,6 +71,7 @@ int main(int argc, char** argv) {
             CheckComputeInline(device);
             CheckPipelines(device);
             CheckPreparedPipeline(device);
+            CheckGraphicsCache();
             CheckPreparedDispatch(device);
             CheckSynchronization(device);
             CheckPhysicalHeap(device);

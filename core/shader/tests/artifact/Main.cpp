@@ -8,6 +8,7 @@
 using namespace AnyBox::Shader;
 
 void CheckGraphicsArtifacts();
+void CheckGraphicsLayoutIdentity();
 
 namespace {
 void Require(bool condition) {
@@ -104,4 +105,4 @@ void Check() {
 }
 }
 
-int main() { return AnyBox::Tests::Run([] { Check(); CheckGraphicsArtifacts(); }); }
+int main() { return AnyBox::Tests::Run([] { Check(); CheckGraphicsArtifacts(); CheckGraphicsLayoutIdentity(); }); }

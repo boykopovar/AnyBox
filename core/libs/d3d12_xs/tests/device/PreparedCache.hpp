@@ -2,6 +2,7 @@
 
 #include "Tests.hpp"
 #include <anybox/shader/Artifact.hpp>
+#include <anybox/shader/GraphicsArtifact.hpp>
 #include <filesystem>
 #include <fstream>
 
@@ -22,21 +23,31 @@ public:
     ~PreparedCache() {
         SetEnvironmentVariableW(L"ANYBOX_SHADER_CACHE", previous.empty() ? nullptr : previous.c_str());
         std::error_code error;
-        if (!file.empty()) std::filesystem::remove(file, error);
+        for (const auto& file : files) std::filesystem::remove(file, error);
         std::filesystem::remove(directory, error);
     }
     void Save(const Shader::ComputeArtifact& artifact) {
-        file = directory / (Shader::DigestName(artifact.sourceHash) + ".abxc");
-        auto bytes = Shader::EncodeComputeArtifact(artifact);
+        write(Shader::DigestName(artifact.sourceHash) + ".abxc", Shader::EncodeComputeArtifact(artifact));
+    }
+    void Save(const Shader::GraphicsArtifact& artifact) {
+        Save(artifact.GetKey(), artifact);
+    }
+    void Save(const Shader::GraphicsArtifactKey& key, const Shader::GraphicsArtifact& artifact) {
+        write(Shader::DigestName(Shader::HashGraphicsArtifactKey(key)) + ".abxg", Shader::EncodeGraphicsArtifact(artifact));
+    }
+
+private:
+    void write(const std::string& name, std::span<const std::byte> bytes) {
+        auto file = directory / name;
+        files.push_back(file);
         std::ofstream output(file, std::ios::binary | std::ios::trunc);
         Require(static_cast<bool>(output.write(reinterpret_cast<const char*>(bytes.data()), static_cast<std::streamsize>(bytes.size()))), "Prepared shader fixture write failed");
         output.close();
         Require(static_cast<bool>(output), "Prepared shader fixture close failed");
     }
 
-private:
     std::wstring previous;
     std::filesystem::path directory;
-    std::filesystem::path file;
+    std::vector<std::filesystem::path> files;
 };
 }
