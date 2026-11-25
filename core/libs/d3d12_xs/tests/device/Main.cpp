@@ -5,6 +5,7 @@
 #include <optional>
 
 void CheckGraphicsCache();
+void CheckGraphicsPipelineStream();
 
 int main(int argc, char** argv) {
     return AnyBox::Tests::Run([&] {
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
             CheckPipelines(device);
             CheckPreparedPipeline(device);
             CheckGraphicsCache();
+            CheckGraphicsPipelineStream();
             CheckPreparedDispatch(device);
             CheckSynchronization(device);
             CheckPhysicalHeap(device);
