@@ -11,6 +11,7 @@ void CheckNativeRawRootArguments();
 void CheckNativePixel();
 void CheckNativeLinkage();
 void CheckNativeVertex();
+void CheckNativeVertexOffsets();
 void CheckNativeFloatingProfile();
 void CheckNativeRootArguments();
 void CheckNativeGraphicsRootArguments();
@@ -36,6 +37,7 @@ int main() {
         CheckNativePixel();
         CheckNativeLinkage();
         CheckNativeVertex();
+        CheckNativeVertexOffsets();
         CheckNativeFloatingProfile();
         CheckNativeRootArguments();
         CheckNativeGraphicsRootArguments();
