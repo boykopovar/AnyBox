@@ -6,6 +6,7 @@
 
 void CheckNativeCompute();
 void CheckRawNativeFrontend();
+void CheckNativeHashPrologue();
 void CheckNativePixel();
 void CheckNativeLinkage();
 void CheckNativeVertex();
@@ -29,6 +30,7 @@ int main() {
     return AnyBox::Tests::Run([] {
         CheckNativeCompute();
         CheckRawNativeFrontend();
+        CheckNativeHashPrologue();
         CheckNativePixel();
         CheckNativeLinkage();
         CheckNativeVertex();

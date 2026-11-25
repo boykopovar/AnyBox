@@ -1,4 +1,5 @@
 #include "Decode.hpp"
+#include "Prologue.hpp"
 #include <RdnaDecoder/RdnaInstructionDecoder.hpp>
 #include <stdexcept>
 #include <vector>
@@ -15,6 +16,7 @@ ShaderRecompiler::RdnaProgram AnyBox::Shader::DecodeNativeProgram(std::span<cons
     using namespace ShaderRecompiler;
     RdnaProgram program;
     std::vector<std::uint32_t> normalized;
+    bool hashPrologue = NormalizeNativeHashPrologue(code, normalized);
     for (;;) {
         auto input = normalized.empty() ? code : std::span<const std::uint32_t>(normalized);
         try {
@@ -36,6 +38,7 @@ ShaderRecompiler::RdnaProgram AnyBox::Shader::DecodeNativeProgram(std::span<cons
             else normalized[next] &= ~0x4000u;
         }
     }
+    if (hashPrologue) RestoreNativeHashPrologue(program, code);
     program.code = code;
     for (auto& instruction : program.instructions) {
         auto index = instruction.programCounter / 4;
