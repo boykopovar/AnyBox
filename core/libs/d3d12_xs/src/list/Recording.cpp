@@ -18,6 +18,7 @@ HRESULT AnyBox::Graphics::CommandList::Close(CommandList* self) {
 HRESULT AnyBox::Graphics::CommandList::Reset(CommandList* self, void* allocator, void* initialState) {
     if (!self->IsClosed()) throw std::logic_error("Recording command list cannot be reset");
     auto* initial = initialState ? PipelineState::From(initialState, self->device) : nullptr;
+    if (initial && initial->GetGraphics() && self->guest.type != D3D12_COMMAND_LIST_TYPE_DIRECT) throw std::invalid_argument("Graphics pipeline requires a direct command list");
     if (initial && self->guest.type != D3D12_COMMAND_LIST_TYPE_DIRECT && self->guest.type != D3D12_COMMAND_LIST_TYPE_COMPUTE) throw std::runtime_error("Initial pipeline is not implemented for this command list type");
     auto* next = Allocator::From(allocator);
     if (next->GetParent() != self->device) throw std::invalid_argument("Command list and allocator devices differ");
@@ -26,7 +27,7 @@ HRESULT AnyBox::Graphics::CommandList::Reset(CommandList* self, void* allocator,
     std::unique_ptr<Allocator, decltype(&Allocator::Release)> heldAllocator(next, &Allocator::Release);
     if (initial) PipelineState::AddRef(initial);
     std::unique_ptr<PipelineState, decltype(&PipelineState::Release)> heldPipeline(initial, &PipelineState::Release);
-    auto* nativePipeline = initial && !initial->GetOffline() ? initial->GetHost() : nullptr;
+    auto* nativePipeline = initial && !initial->IsOffline() ? initial->GetHost() : nullptr;
     auto result = self->host->Reset(next->GetHost(), nativePipeline);
     CheckGraphicsResult(result, "ID3D12GraphicsCommandList::Reset");
 

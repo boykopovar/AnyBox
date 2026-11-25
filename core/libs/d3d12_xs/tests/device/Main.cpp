@@ -6,6 +6,7 @@
 
 void CheckGraphicsCache();
 void CheckGraphicsPipelineStream();
+void CheckPreparedGraphics(AnyBox::Graphics::Device* device);
 
 int main(int argc, char** argv) {
     return AnyBox::Tests::Run([&] {
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
             CheckComputeInline(device);
             CheckPipelines(device);
             CheckPreparedPipeline(device);
+            CheckPreparedGraphics(device);
             CheckGraphicsCache();
             CheckGraphicsPipelineStream();
             CheckPreparedDispatch(device);

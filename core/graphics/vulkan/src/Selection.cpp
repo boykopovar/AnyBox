@@ -61,6 +61,13 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     enabled.textureCompressionETC2 = features.features.textureCompressionETC2;
     enabled.textureCompressionASTC_LDR = features.features.textureCompressionASTC_LDR;
     enabled.imageCubeArray = features.features.imageCubeArray;
+    enabled.depthClamp = features.features.depthClamp;
+    enabled.depthBiasClamp = features.features.depthBiasClamp;
+    enabled.fillModeNonSolid = features.features.fillModeNonSolid;
+    enabled.independentBlend = features.features.independentBlend;
+    enabled.logicOp = features.features.logicOp;
+    enabled.dualSrcBlend = features.features.dualSrcBlend;
+    enabled.depthBounds = features.features.depthBounds;
     enabled.shaderClipDistance = features.features.shaderClipDistance;
     enabled.shaderCullDistance = features.features.shaderCullDistance;
     enabled.vertexPipelineStoresAndAtomics = features.features.vertexPipelineStoresAndAtomics;

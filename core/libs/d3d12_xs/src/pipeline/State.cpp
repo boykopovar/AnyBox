@@ -1,5 +1,6 @@
 #include "State.hpp"
 #include "Offline.hpp"
+#include "graphics/Offline.hpp"
 #include <anybox/graphics/commands/Inline.hpp>
 
 AnyBox::Graphics::PipelineState::PipelineState(ID3D12PipelineState* host, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(host), device(device), root(root) {
@@ -9,6 +10,11 @@ AnyBox::Graphics::PipelineState::PipelineState(ID3D12PipelineState* host, Device
 AnyBox::Graphics::PipelineState::PipelineState(std::unique_ptr<OfflinePipeline> offline, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(nullptr), device(device), root(root) {
     initialize();
     this->offline = offline.release();
+}
+
+AnyBox::Graphics::PipelineState::PipelineState(std::unique_ptr<OfflineGraphicsPipeline> graphics, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(nullptr), device(device), root(root) {
+    initialize();
+    this->graphics = graphics.release();
 }
 
 void AnyBox::Graphics::PipelineState::initialize() {
@@ -31,6 +37,7 @@ AnyBox::Graphics::PipelineState* AnyBox::Graphics::PipelineState::From(void* obj
 AnyBox::Graphics::PipelineState::~PipelineState() {
     privateData.Reset();
     delete offline;
+    delete graphics;
     if (host) host->Release();
     RootSignature::Release(root);
     Device::Release(device);

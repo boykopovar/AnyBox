@@ -3,8 +3,9 @@
 
 void AnyBox::Graphics::CommandList::bindPipeline(PipelineState* next) {
     if (pipeline == next) return;
+    if (next->GetGraphics() && guest.type != D3D12_COMMAND_LIST_TYPE_DIRECT) throw std::invalid_argument("Graphics pipeline requires a direct command list");
     if (guest.type != D3D12_COMMAND_LIST_TYPE_DIRECT && guest.type != D3D12_COMMAND_LIST_TYPE_COMPUTE) throw std::runtime_error("Pipeline binding is not implemented for this command list type");
-    if (!next->GetOffline()) host->SetPipelineState(next->GetHost());
+    if (!next->IsOffline()) host->SetPipelineState(next->GetHost());
     PipelineState::AddRef(next);
     if (pipeline) PipelineState::Release(pipeline);
     pipeline = next;

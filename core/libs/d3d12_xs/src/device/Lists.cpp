@@ -14,6 +14,7 @@ HRESULT CreateList(AnyBox::Graphics::Device* self, std::uint32_t nodeMask, D3D12
     *list = nullptr;
     if (!CommandList::SupportsCreation(type, interfaceId)) throw std::invalid_argument("Unsupported command list creation interface");
     auto* initial = initialState ? PipelineState::From(initialState, self) : nullptr;
+    if (initial && initial->GetGraphics() && type != D3D12_COMMAND_LIST_TYPE_DIRECT) throw std::invalid_argument("Graphics pipeline requires a direct command list");
     if (initial && type != D3D12_COMMAND_LIST_TYPE_DIRECT && type != D3D12_COMMAND_LIST_TYPE_COMPUTE) throw std::runtime_error("Initial pipeline is not implemented for this command list type");
     auto* allocation = Allocator::From(allocator);
     if (allocation->GetParent() != self) throw std::invalid_argument("Command list and allocator devices differ");
@@ -21,7 +22,7 @@ HRESULT CreateList(AnyBox::Graphics::Device* self, std::uint32_t nodeMask, D3D12
     if (interfaceId == DmaListId && static_cast<std::uint32_t>(type) != 0x10 && type != D3D12_COMMAND_LIST_TYPE_COPY) throw std::invalid_argument("DMA command list requires a copy allocator");
     auto nativeType = static_cast<std::uint32_t>(type) == 0x10 ? D3D12_COMMAND_LIST_TYPE_COPY : type;
     void* host = nullptr;
-    auto* nativePipeline = initial && !initial->GetOffline() ? initial->GetHost() : nullptr;
+    auto* nativePipeline = initial && !initial->IsOffline() ? initial->GetHost() : nullptr;
     auto result = self->GetHost()->CreateCommandList(nodeMask, nativeType, allocation->GetHost(), nativePipeline, NativeGuid(GraphicsListId), &host);
     CheckGraphicsResult(result, "ID3D12Device::CreateCommandList");
     if (!host) throw std::runtime_error("D3D12 command list creation returned no interface");

@@ -25,6 +25,7 @@ void AnyBox::Graphics::Tests::CheckPipelineStreams(Device* device, RootSignature
     Reject<std::invalid_argument>([&] { create(device, &description, Guid{}, &output); });
     Reject<std::invalid_argument>([&] { create(device, &description, PipelineStateId, nullptr); });
     StreamFixture graphics;
+    graphics.Append(0, reinterpret_cast<ID3D12RootSignature*>(root));
     graphics.Append(1, D3D12_SHADER_BYTECODE{code.data(), code.size()});
     auto graphicsDescription = graphics.GetDescription();
     Reject<std::runtime_error>([&] { create(device, &graphicsDescription, PipelineStateId, &output); });
