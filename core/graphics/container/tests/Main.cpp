@@ -15,6 +15,7 @@ void CheckNativeBindings();
 void CheckRootSignatureLayout();
 void CheckEmbeddedDxbc();
 void CheckFspx();
+void CheckFspxDispatch();
 
 namespace {
 using namespace AnyBox::Graphics::Container;
@@ -92,5 +93,6 @@ int main() {
         CheckRootSignatureLayout();
         CheckEmbeddedDxbc();
         CheckFspx();
+        CheckFspxDispatch();
     });
 }

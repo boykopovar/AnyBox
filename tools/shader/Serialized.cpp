@@ -1,5 +1,6 @@
 #include "Serialized.hpp"
 #include <anybox/graphics/container/Fspx.hpp>
+#include <anybox/graphics/container/FspxDispatch.hpp>
 #include <anybox/shader/Artifact.hpp>
 #include <anybox/shader/Native.hpp>
 #include <RdnaDecoder/RdnaInstructionDecoder.hpp>
@@ -21,15 +22,18 @@ std::span<const std::byte> ReadPayload(std::span<const std::byte> data) {
 std::string AnyBox::Shader::Tools::InspectSerializedCompute(std::span<const std::byte> data) {
     data = ReadPayload(data);
     Graphics::Container::FspxView view(data);
+    auto state = Graphics::Container::ReadSerializedComputeState(view.GetDispatchState());
     std::ostringstream output;
     output << "dispatch_bytes=" << view.GetDispatchState().size() << " auxiliary_bytes=" << view.GetAuxiliaryState().size();
     output << " code_words=" << view.GetCode().size() / 4 << " record_bytes=" << view.GetRecords().size();
+    output << " wave=" << state.waveSize << " threads=" << state.shader.threads[0] << ',' << state.shader.threads[1] << ',' << state.shader.threads[2] << " shared_bytes=" << state.shader.declaredSharedBytes;
     output << " source=" << DigestName(HashShader(data)) << '\n';
     return output.str();
 }
 
 std::string AnyBox::Shader::Tools::InspectSerializedInstructions(std::span<const std::byte> data, std::uint32_t waveSize) {
     Graphics::Container::FspxView view(ReadPayload(data));
+    if (Graphics::Container::ReadSerializedComputeState(view.GetDispatchState()).waveSize != waveSize) throw std::invalid_argument("Serialized shader wave size disagrees with its dispatch state");
     NativeFrontend frontend(view.GetCode(), waveSize);
     std::ostringstream output;
     output << "wave=" << waveSize << " instructions=" << frontend.GetDecoded().instructions.size() << " blocks=" << frontend.GetGraph().blocks.size() << '\n';
