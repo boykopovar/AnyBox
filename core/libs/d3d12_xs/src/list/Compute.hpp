@@ -4,6 +4,14 @@
 #include <anybox/graphics/commands/RootState.hpp>
 
 namespace AnyBox::Graphics {
+class PipelineState;
+class PreparedDispatch;
+
+struct ComputeRecording {
+    std::shared_ptr<PipelineState> pipeline;
+    std::vector<std::shared_ptr<const PreparedDispatch>> dispatches;
+};
+
 class ComputeState {
 public:
     explicit ComputeState(RootSignature* root) : root(root), arguments(root->GetLayout()) { RootSignature::AddRef(root); }

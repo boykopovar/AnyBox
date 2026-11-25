@@ -16,6 +16,7 @@ struct RootRange {
     std::uint32_t space;
     std::uint32_t flags;
     std::uint32_t tableOffset;
+    bool operator==(const RootRange&) const = default;
 };
 
 struct RootParameter {
@@ -26,6 +27,7 @@ struct RootParameter {
     std::uint32_t wordCount = 0;
     std::uint32_t flags = 0;
     std::vector<RootRange> ranges;
+    bool operator==(const RootParameter&) const = default;
 };
 
 struct RootSignatureLayout {
@@ -33,6 +35,7 @@ struct RootSignatureLayout {
     std::uint32_t flags;
     std::uint32_t staticSamplerCount;
     std::vector<RootParameter> parameters;
+    bool operator==(const RootSignatureLayout&) const = default;
 };
 
 RootSignatureLayout ReadRootSignatureLayout(std::span<const std::byte> container);

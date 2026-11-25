@@ -50,6 +50,9 @@ public:
     ID3D12Device* GetHost() const noexcept { return host; }
     std::array<std::uint32_t, 2> GetWaveLimits();
     Vulkan::Context& GetGpuContext() const noexcept { return *gpuContext; }
+    static constexpr std::uint32_t PreparedQueueCount = 5;
+    std::uint32_t ReservePreparedQueue();
+    void ReleasePreparedQueue(std::uint32_t index) noexcept;
     Texture::AddressSpace& GetTextureAddresses() noexcept { return textureAddresses; }
     bool Matches(const D3D12XboxCreateDeviceParameters& value) const noexcept;
     static std::uint32_t TryAddRef(Device* self);
@@ -89,6 +92,7 @@ private:
     const DeviceTable* vtable;
     std::atomic<std::uint32_t> references{1};
     std::atomic<std::uint32_t> computeQueues{0};
+    std::atomic<std::uint32_t> preparedQueues{0};
     ID3D12Device* host;
     D3D12XboxCreateDeviceParameters parameters;
     std::mutex dxgiMutex;

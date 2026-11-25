@@ -26,6 +26,9 @@ HRESULT AnyBox::Graphics::CommandList::Reset(CommandList* self, void* allocator,
     self->state &= ~closedBit;
     delete self->compute;
     self->compute = nullptr;
+    delete self->recording;
+    self->recording = nullptr;
+    self->nativeCommandsRecorded = false;
     self->resetGuestCommands();
     return result;
 }

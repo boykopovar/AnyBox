@@ -2,6 +2,7 @@
 #include "../pipeline/Shader.hpp"
 #include "../pipeline/State.hpp"
 #include "../pipeline/Offline.hpp"
+#include <anybox/shader/Requirements.hpp>
 #include <memory>
 
 namespace {
@@ -39,8 +40,11 @@ HRESULT AnyBox::Graphics::Device::CreateComputePipelineStateX(Device* self, cons
         root = embedded.get();
     }
 
-    if (RequiresPreparedCompute(*self, code)) {
-        auto offline = std::make_unique<OfflinePipeline>(*self, *root, LoadPreparedCompute(code));
+    auto artifact = RequiresPreparedCompute(*self, code) ? LoadPreparedCompute(code) : FindPreparedCompute(code);
+    if (artifact) {
+        auto wave = Shader::GetComputeWaveSize(code);
+        if (wave && *wave != artifact->waveSize) throw std::runtime_error("Prepared compute artifact wave size does not match the Xbox shader");
+        auto offline = std::make_unique<OfflinePipeline>(*self, *root, std::move(*artifact));
         *pipeline = new PipelineState(std::move(offline), self, root);
         return S_OK;
     }

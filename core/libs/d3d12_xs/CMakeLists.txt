@@ -12,6 +12,7 @@ target_sources(d3d12_xs PRIVATE src/device/Pipelines.cpp src/device/Features.cpp
 target_link_libraries(d3d12_xs PRIVATE anybox_container)
 target_link_libraries(d3d12_xs PRIVATE anybox_shader_requirements)
 target_link_libraries(d3d12_xs PRIVATE anybox_shader_runtime anybox_shader_arguments)
+target_include_directories(d3d12_xs SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/3rdparty/anyps5/core/shader/recompiler")
 target_sources(d3d12_xs PRIVATE src/pipeline/Cache.cpp src/pipeline/Selection.cpp)
 target_sources(d3d12_xs PRIVATE src/memory/Configuration.cpp)
 target_sources(d3d12_xs PRIVATE src/device/Creation.cpp src/device/Lifetime.cpp src/device/Properties.cpp src/device/Table.cpp)
