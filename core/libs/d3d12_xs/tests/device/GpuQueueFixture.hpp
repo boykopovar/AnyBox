@@ -24,6 +24,7 @@ public:
         Vulkan::Check(context.GetFunctions().allocateCommandBuffers(context.GetDevice(), &allocation, &commands), "Allocate reusable queue test commands");
         VkCommandBufferBeginInfo begin{};
         begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        begin.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
         Vulkan::Check(context.GetFunctions().beginCommandBuffer(commands, &begin), "Begin reusable queue test commands");
         return commands;
     }
