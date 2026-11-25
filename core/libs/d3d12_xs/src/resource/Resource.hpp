@@ -4,6 +4,7 @@
 #include "Texture.hpp"
 #include "../object/Lifetime.hpp"
 #include "../object/ManagedProperties.hpp"
+#include <memory>
 
 namespace AnyBox::Graphics {
 inline constexpr Guid ResourceId{0x696442BE, 0xA72E, 0x4059, {0xBC, 0x79, 0x5B, 0x5C, 0x98, 0x04, 0x0F, 0xAD}};
@@ -33,6 +34,8 @@ public:
         return texture->pitch;
     }
     static bool Supports(const Guid& interfaceId) noexcept;
+    static std::uint32_t Release(Resource* self);
+    static std::shared_ptr<Resource> AcquirePlacedBuffer(Device* device, std::uint64_t address);
     static Resource* From(void* value, Device* owner);
     const D3D12_RESOURCE_DESC1& GetMetadata() const noexcept { return description; }
     static constexpr std::size_t GetVtableOffset() { return offsetof(Resource, vtable); }

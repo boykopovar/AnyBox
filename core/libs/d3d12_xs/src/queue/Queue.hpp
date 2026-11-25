@@ -34,6 +34,9 @@ private:
     Device* device;
     D3D12_COMMAND_QUEUE_DESC description;
     std::uint32_t xboxSelection = 0;
+    std::mutex submissionMutex;
+    std::uint32_t preparedQueue = Device::PreparedQueueCount;
+    HRESULT submissionFailure = S_OK;
 };
 
 static_assert(std::is_standard_layout_v<Queue>);

@@ -43,6 +43,7 @@ ID3D12GraphicsCommandList7* AnyBox::Graphics::CommandList::getSynchronizationHos
 void AnyBox::Graphics::CommandList::synchronize(bool top, std::uint32_t flags, std::uint32_t control, std::uint64_t address, std::uint64_t size) {
     if (IsClosed()) throw std::logic_error("GPU synchronization requires a recording command list");
     flushGuestCommands();
+    if (!GetPreparedDispatches().empty()) throw std::runtime_error("Mixed native and prepared compute commands are not implemented");
     ValidateFlags(guest.type, top, flags, control);
     ValidateRange(address, size);
     D3D12_GLOBAL_BARRIER barrier{D3D12_BARRIER_SYNC_ALL, D3D12_BARRIER_SYNC_ALL, D3D12_BARRIER_ACCESS_COMMON, D3D12_BARRIER_ACCESS_COMMON};
@@ -51,6 +52,7 @@ void AnyBox::Graphics::CommandList::synchronize(bool top, std::uint32_t flags, s
     group.NumBarriers = 1;
     group.pGlobalBarriers = &barrier;
     getSynchronizationHost()->Barrier(1, &group);
+    nativeCommandsRecorded = true;
 }
 
 void AnyBox::Graphics::CommandList::SyncTopOfPipeX(CommandList* self, std::uint32_t flags, std::uint32_t control, std::uint64_t address, std::uint64_t size) { self->synchronize(true, flags, control, address, size); }

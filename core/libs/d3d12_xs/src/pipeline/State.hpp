@@ -21,6 +21,8 @@ public:
     PrivateData& GetPrivateDataStore() { return privateData.Get(); }
     Device* GetParent() const noexcept { return device; }
     RootSignature* GetRootSignature() const noexcept { return root; }
+    static std::shared_ptr<PipelineState> Acquire(std::uint64_t address, Device* device);
+    static std::uint32_t Release(PipelineState* self);
     static bool Supports(const Guid& interfaceId) noexcept { return interfaceId == PipelineStateId || interfaceId == UnknownId || interfaceId == ObjectId || interfaceId == DeviceChildId || interfaceId == PageableId; }
     static HRESULT GetCachedBlob(PipelineState* self, ID3DBlob** blob);
     static constexpr std::size_t GetVtableOffset() { return offsetof(PipelineState, vtable); }

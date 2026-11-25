@@ -5,6 +5,7 @@ AnyBox::Graphics::Queue::Queue(ID3D12CommandQueue* host, Device* device, const D
 
 AnyBox::Graphics::Queue::~Queue() {
     host->Release();
+    if (preparedQueue != Device::PreparedQueueCount) device->ReleasePreparedQueue(preparedQueue);
     if (xboxSelection) device->ReleaseQueueSelection(xboxSelection);
     Device::Release(device);
 }

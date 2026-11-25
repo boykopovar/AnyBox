@@ -1,6 +1,10 @@
 #include "List.hpp"
 #include "Compute.hpp"
+#include "../pipeline/Offline.hpp"
+#include "../pipeline/State.hpp"
 #include <anybox/graphics/commands/Inline.hpp>
+#include <iterator>
+#include <optional>
 #include <stdexcept>
 
 void AnyBox::Graphics::CommandList::resetGuestCommands() noexcept {
@@ -31,16 +35,41 @@ void AnyBox::Graphics::CommandList::updateRootHeaders() noexcept {
 void AnyBox::Graphics::CommandList::flushGuestCommands() {
     validateGuestCommands();
     if (guest.commandWrite == inlineCommands.data()) return;
-    if (!compute) throw std::runtime_error("Xbox inline command stream has no bound compute root signature");
     auto words = std::span(inlineCommands.data(), static_cast<std::size_t>(guest.commandWrite - inlineCommands.data()));
-    Commands::InlineReader validation(words);
-    while (!validation.Empty()) {
-        if (std::holds_alternative<Commands::Dispatch>(validation.Next(compute->GetArguments()))) throw std::runtime_error("Xbox inline compute dispatch execution is not implemented");
-    }
+    std::optional<Commands::RootState> arguments;
+    if (compute) arguments.emplace(compute->GetArguments());
+    ComputeRecording pending;
+    if (recording) pending.pipeline = recording->pipeline;
     Commands::InlineReader reader(words);
     while (!reader.Empty()) {
-        auto update = std::get<Commands::RootWrite>(reader.Next(compute->GetArguments()));
-        compute->GetArguments().Write(update.parameter, update.offset, update.words);
+        auto command = reader.Next(arguments ? &*arguments : nullptr);
+        if (auto* update = std::get_if<Commands::RootWrite>(&command)) {
+            arguments->Write(update->parameter, update->offset, update->words);
+            continue;
+        }
+        if (guest.type != D3D12_COMMAND_LIST_TYPE_COMPUTE) throw std::runtime_error("Prepared inline dispatch requires a compute command list");
+        if (auto* bind = std::get_if<Commands::PipelineBind>(&command)) {
+            pending.pipeline = PipelineState::Acquire(bind->address, device);
+            continue;
+        }
+        const auto& dispatch = std::get<Commands::Dispatch>(command);
+        if (dispatch.header != Commands::DispatchHeader) throw std::runtime_error("Xbox inline compute dispatch mode is not implemented");
+        if (nativeCommandsRecorded) throw std::runtime_error("Mixed native and prepared compute commands are not implemented");
+        if (!pending.pipeline || !compute) throw std::runtime_error("Prepared inline dispatch requires a pipeline and compute root signature");
+        if (compute->GetRoot()->GetLayout() != pending.pipeline->GetRootSignature()->GetLayout()) throw std::invalid_argument("Inline dispatch root signature does not match the prepared compute pipeline");
+        pending.dispatches.push_back(PrepareComputeDispatch(pending.pipeline, *arguments, dispatch.groups));
     }
+    if (recording) {
+        recording->dispatches.insert(recording->dispatches.end(), std::make_move_iterator(pending.dispatches.begin()), std::make_move_iterator(pending.dispatches.end()));
+        recording->pipeline = std::move(pending.pipeline);
+    } else if (pending.pipeline) {
+        recording = new ComputeRecording(std::move(pending));
+    }
+    if (arguments) compute->GetArguments() = std::move(*arguments);
     guest.commandWrite = inlineCommands.data();
+}
+
+std::span<const std::shared_ptr<const AnyBox::Graphics::PreparedDispatch>> AnyBox::Graphics::CommandList::GetPreparedDispatches() const noexcept {
+    if (recording) return recording->dispatches;
+    return {};
 }

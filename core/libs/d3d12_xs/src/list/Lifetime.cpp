@@ -9,6 +9,7 @@ AnyBox::Graphics::CommandList::CommandList(ID3D12GraphicsCommandList* host, Devi
 }
 
 AnyBox::Graphics::CommandList::~CommandList() {
+    delete recording;
     delete compute;
     if (synchronizationHost) synchronizationHost->Release();
     host->Release();

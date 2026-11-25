@@ -3,10 +3,13 @@
 #include "../allocator/Allocator.hpp"
 #include "../object/Lifetime.hpp"
 #include "Header.hpp"
+#include <memory>
 #include <span>
 
 namespace AnyBox::Graphics {
 class ComputeState;
+struct ComputeRecording;
+class PreparedDispatch;
 inline constexpr Guid CommandListId{0x7116D91C, 0xE7E4, 0x47CE, {0xB8, 0xC6, 0xEC, 0x81, 0x68, 0xF4, 0x37, 0xE5}};
 inline constexpr Guid GraphicsListId{0x5B160D0F, 0xAC1B, 0x4185, {0x8B, 0xA8, 0xB3, 0xAE, 0x42, 0xA5, 0xA4, 0x55}};
 inline constexpr Guid XboxGraphicsListId{0xC3827890, 0x4024, 0x474C, {0x98, 0xCF, 0x64, 0x5B, 0x51, 0xDC, 0x48, 0x74}};
@@ -44,6 +47,7 @@ public:
     static void SetComputeRootShaderResourceView(CommandList* self, std::uint32_t parameter, std::uint64_t address);
     static void SetComputeRootUnorderedAccessView(CommandList* self, std::uint32_t parameter, std::uint64_t address);
     const ComputeState* GetComputeState() const noexcept { return compute; }
+    std::span<const std::shared_ptr<const PreparedDispatch>> GetPreparedDispatches() const noexcept;
     static void SyncTopOfPipeX(CommandList* self, std::uint32_t flags, std::uint32_t control, std::uint64_t address, std::uint64_t size);
     static void SyncBottomOfPipeX(CommandList* self, std::uint32_t flags, std::uint32_t control, std::uint64_t address, std::uint64_t size);
 
@@ -68,6 +72,8 @@ private:
     std::uint32_t state;
     ID3D12GraphicsCommandList7* synchronizationHost = nullptr;
     ComputeState* compute = nullptr;
+    ComputeRecording* recording = nullptr;
+    bool nativeCommandsRecorded = false;
 };
 
 static_assert(std::is_standard_layout_v<CommandList>);
