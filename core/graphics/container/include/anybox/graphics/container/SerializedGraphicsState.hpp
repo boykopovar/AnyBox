@@ -64,7 +64,7 @@ struct SerializedGraphicsFixedState {
     SerializedRasterizerState rasterizer;
     std::array<SerializedBlendTarget, 8> targets;
     std::array<std::uint32_t, 8> formats;
-    bool alphaToCoverage;
+    std::uint32_t alphaToCoverage;
     bool independentBlend;
     std::uint32_t sampleMask;
     std::uint32_t targetCount;

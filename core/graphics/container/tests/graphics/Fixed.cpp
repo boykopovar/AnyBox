@@ -9,7 +9,7 @@ void CheckSerializedGraphicsFixedState() {
     auto output = fixture.Read();
     Require(output.targetCount == 1 && output.formats[0] == 28 && output.depthFormat == 0);
     Require(output.topology == 3 && output.stripCut == 0 && output.samples == 1 && output.sampleQuality == 0);
-    Require(output.sampleMask == UINT32_MAX && output.independentBlend && !output.alphaToCoverage);
+    Require(output.sampleMask == UINT32_MAX && !output.independentBlend && output.alphaToCoverage == 0);
     Require(output.rasterizer.fill == 3 && output.rasterizer.cull == 1 && output.rasterizer.depthClip && output.rasterizer.forcedSampleCount == 0);
     Require(!output.depth.depthEnable && !output.depth.stencilEnable && output.depth.comparison == 1);
     for (auto version : {0x10004u, 0x10005u, 0x10006u}) {
@@ -35,8 +35,9 @@ void CheckSerializedGraphicsFixedState() {
     fixture.Context(72, (1 << 8) | 4 | 2);
     fixture.auxiliary[42] = std::byte{4};
     fixture.auxiliary[44] = std::byte{15};
+    fixture.Context(112, 1);
     output = fixture.Read();
-    Require(output.alphaToCoverage && output.rasterizer.fill == 2 && output.rasterizer.cull == 3 && !output.rasterizer.frontCounterClockwise);
+    Require(output.alphaToCoverage == 2 && output.independentBlend && output.rasterizer.fill == 2 && output.rasterizer.cull == 3 && !output.rasterizer.frontCounterClockwise);
     Require(output.rasterizer.depthBias == -13 && output.rasterizer.depthBiasClamp == -2.5f && output.rasterizer.slopeScaledDepthBias == 2.5f);
     Require(!output.rasterizer.depthClip && output.rasterizer.multisample && output.rasterizer.antialiasedLine && output.rasterizer.conservative == 1 && output.rasterizer.forcedSampleCount == 4);
 

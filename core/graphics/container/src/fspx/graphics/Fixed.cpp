@@ -19,10 +19,9 @@ AnyBox::Graphics::Container::SerializedGraphicsFixedState AnyBox::Graphics::Cont
     result.depth = ReadDepth(context);
     result.rasterizer = ReadRasterizer(context, auxiliary);
     result.targets = ReadBlend(context, auxiliary);
-    result.alphaToCoverage = (Byte(auxiliary, 44) & 1) != 0;
-    result.independentBlend = true;
-    const auto& first = result.targets.front();
-    for (auto factor : {first.source, first.destination, first.sourceAlpha, first.destinationAlpha}) if (factor >= 16 && factor <= 19) result.independentBlend = false;
+    auto coverage = ReadInteger(context, 112);
+    result.alphaToCoverage = (coverage & 1) != 0 ? 2u - ((coverage >> 16) & 1) : 0u;
+    result.independentBlend = (Byte(auxiliary, 44) & 1) != 0;
     result.sampleMask = ReadInteger(auxiliary, 28);
     result.targetCount = Byte(auxiliary, 37);
     if (result.targetCount > result.targets.size()) throw std::invalid_argument("Xbox serialized graphics target count exceeds its array");

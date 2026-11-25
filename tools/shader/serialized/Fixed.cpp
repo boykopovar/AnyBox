@@ -5,9 +5,9 @@
 std::string AnyBox::Shader::Tools::InspectSerializedGraphicsState(std::span<const std::byte> state, std::span<const std::byte> auxiliary) {
     auto result = Graphics::Container::ReadSerializedGraphicsFixedState(state, auxiliary);
     std::ostringstream output;
-    output << "targets=" << result.targetCount << " depth_format=" << result.depthFormat << " samples=" << result.samples << " quality=" << result.sampleQuality << " mask=" << result.sampleMask << " topology=" << result.topology << " strip_cut=" << result.stripCut << '\n';
+    output << "targets=" << result.targetCount << " depth_format=" << result.depthFormat << " samples=" << result.samples << " quality=" << result.sampleQuality << " mask=" << result.sampleMask << " topology=" << result.topology << " strip_cut=" << result.stripCut << " alpha_coverage=" << result.alphaToCoverage << " independent_blend=" << result.independentBlend << '\n';
     const auto& rasterizer = result.rasterizer;
-    output << "fill=" << rasterizer.fill << " cull=" << rasterizer.cull << " front_ccw=" << rasterizer.frontCounterClockwise << " depth_clip=" << rasterizer.depthClip << " depth_bias=" << rasterizer.depthBias << " clamp=" << rasterizer.depthBiasClamp << " slope=" << rasterizer.slopeScaledDepthBias << " forced_samples=" << rasterizer.forcedSampleCount << " conservative=" << rasterizer.conservative << '\n';
+    output << "fill=" << rasterizer.fill << " cull=" << rasterizer.cull << " front_ccw=" << rasterizer.frontCounterClockwise << " depth_clip=" << rasterizer.depthClip << " depth_bias=" << rasterizer.depthBias << " clamp=" << rasterizer.depthBiasClamp << " slope=" << rasterizer.slopeScaledDepthBias << " forced_samples=" << rasterizer.forcedSampleCount << " conservative=" << rasterizer.conservative << " multisample=" << rasterizer.multisample << " antialiased_line=" << rasterizer.antialiasedLine << '\n';
     const auto& depth = result.depth;
     output << "depth=" << depth.depthEnable << " write=" << depth.depthWrite << " comparison=" << depth.comparison << " stencil=" << depth.stencilEnable << " bounds=" << depth.boundsEnable << " separate_back=" << depth.separateBackFace << '\n';
     for (std::size_t index = 0; index < result.targetCount; ++index) {

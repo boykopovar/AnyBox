@@ -18,8 +18,16 @@ void CheckSerializedGraphicsBlend() {
     for (std::uint32_t factor = 1; factor <= 19; ++factor) {
         fixture.Context(120, 0xC0000000 | (factor - 1));
         output = fixture.Read();
-        Require(output.targets.front().source == factor && output.independentBlend == (factor < 16));
+        Require(output.targets.front().source == factor && !output.independentBlend);
     }
+    fixture.auxiliary[44] = std::byte{1};
+    Require(fixture.Read().independentBlend && fixture.Read().alphaToCoverage == 0);
+    fixture.Context(112, 1);
+    Require(fixture.Read().alphaToCoverage == 2);
+    fixture.Context(112, 0x10001);
+    Require(fixture.Read().alphaToCoverage == 1);
+    fixture.auxiliary[44] = std::byte{};
+    Require(!fixture.Read().independentBlend && fixture.Read().alphaToCoverage == 1);
     constexpr std::array<std::uint32_t, 5> encodings{0, 1, 4, 2, 3};
     for (std::uint32_t index = 0; index < encodings.size(); ++index) {
         fixture.Context(120, 0xC0000000 | (encodings[index] << 5) | (encodings[4 - index] << 21));
