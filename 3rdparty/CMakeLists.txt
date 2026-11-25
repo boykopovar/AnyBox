@@ -6,6 +6,7 @@ function(anybox_add_opus)
     set(OPUS_INSTALL_PKG_CONFIG_MODULE OFF CACHE BOOL "" FORCE)
     set(OPUS_INSTALL_CMAKE_CONFIG_MODULE OFF CACHE BOOL "" FORCE)
     add_subdirectory(opus)
+    set_target_properties(opus PROPERTIES MSVC_RUNTIME_LIBRARY "${CMAKE_MSVC_RUNTIME_LIBRARY}")
 endfunction()
 
 anybox_add_opus()

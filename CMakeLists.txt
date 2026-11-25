@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.25)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreadedDLL)
+set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
 
 project(AnyBox VERSION 0.1.0 LANGUAGES C CXX)
 
