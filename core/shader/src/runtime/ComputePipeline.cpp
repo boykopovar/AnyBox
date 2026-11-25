@@ -22,7 +22,7 @@ ComputePipeline::ComputePipeline(AnyBox::Vulkan::Context& context, const Compute
             Vulkan::Check(context.GetFunctions().createDescriptorSetLayout(context.GetDevice(), &description, nullptr, &descriptorLayout), "Create offline compute descriptor layout");
             layouts.push_back(descriptorLayout);
         }
-        pipeline = std::make_unique<Vulkan::ComputePipeline>(context, artifact.code, artifact.pushConstantSize, "main", layouts);
+        pipeline = std::make_unique<Vulkan::ComputePipeline>(context, artifact.code, artifact.pushConstantSize, "main", layouts, artifact.waveSize);
     } catch (...) {
         if (descriptorLayout) context.GetFunctions().destroyDescriptorSetLayout(context.GetDevice(), descriptorLayout, nullptr);
         throw;

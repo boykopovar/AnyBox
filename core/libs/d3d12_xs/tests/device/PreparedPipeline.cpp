@@ -2,8 +2,10 @@
 #include "PreparedCache.hpp"
 #include "../../src/pipeline/State.hpp"
 #include <anybox/graphics/container/View.hpp>
+#include "../../../../graphics/container/tests/Fixtures.hpp"
 #include "../../../../graphics/vulkan/tests/Tests.hpp"
 #include <d3dcompiler.h>
+#include <string_view>
 
 namespace {
 std::vector<std::byte> EmptyShader() {
@@ -21,8 +23,35 @@ std::vector<std::byte> EmptyShader() {
 void AnyBox::Graphics::Tests::CheckPreparedPipeline(Device* device) {
     D3D12_FEATURE_DATA_D3D12_OPTIONS4 options{};
     Require(device->GetHost()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS4, &options, sizeof(options)) == S_OK, "Prepared pipeline capability query failed");
-    if (options.Native16BitShaderOpsSupported) return;
+    D3D12_FEATURE_DATA_D3D12_OPTIONS1 waves{};
+    Require(device->GetHost()->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS1, &waves, sizeof(waves)) == S_OK, "Compute wave capability query failed");
+    constexpr auto waveSize = Shader::PreparedComputeWaveSize;
+    auto nativeWaveSize = waves.WaveOps && waves.WaveLaneCountMin == waveSize && waves.WaveLaneCountMax == waveSize;
+    if (nativeWaveSize && options.Native16BitShaderOpsSupported) return;
     ComputeFixture fixture(device);
+    PreparedCache cache;
+    D3D12_COMPUTE_PIPELINE_STATE_DESC description{};
+    description.pRootSignature = reinterpret_cast<ID3D12RootSignature*>(fixture.GetRoot());
+    auto create = Method<decltype(&Device::CreateComputePipelineStateX)>(device, 62);
+    void* output = nullptr;
+    if (!nativeWaveSize) {
+        auto program = Fixtures::MakeXboxProgram();
+        std::array<std::byte, 8> features{};
+        features[1] = std::byte{0x40};
+        auto code = Container::BuildDxbc(std::array<Container::Part, 2>{{{0x30494653, features}, {0x4C495844, program}}});
+        description.CS = {code.data(), code.size()};
+        bool requestedArtifact = false;
+        Reject<std::runtime_error>([&] {
+            try { create(device, &description, 0, nullptr, PipelineStateId, &output); }
+            catch (const std::runtime_error& error) {
+                requestedArtifact = std::string_view(error.what()).starts_with("Prepared compute shader is missing: ");
+                throw;
+            }
+        });
+        Require(requestedArtifact && !output, "Wave32 shader without a native fixed wave size did not request a prepared shader");
+    }
+    if (options.Native16BitShaderOpsSupported) return;
+
     auto original = EmptyShader();
     Container::DxbcView view(original);
     std::vector<Container::Part> parts;
@@ -37,12 +66,7 @@ void AnyBox::Graphics::Tests::CheckPreparedPipeline(Device* device) {
     artifact.sourceHash = Shader::HashShader(code);
     artifact.threads = {1, 1, 1};
     artifact.code = Vulkan::Tests::CompileCompute("#version 450\nlayout(local_size_x=1) in; void main() {}\n");
-    PreparedCache cache;
-    D3D12_COMPUTE_PIPELINE_STATE_DESC description{};
-    description.pRootSignature = reinterpret_cast<ID3D12RootSignature*>(fixture.GetRoot());
     description.CS = {code.data(), code.size()};
-    auto create = Method<decltype(&Device::CreateComputePipelineStateX)>(device, 62);
-    void* output = nullptr;
     Reject<std::runtime_error>([&] { create(device, &description, 0, nullptr, PipelineStateId, &output); });
     Require(!output, "Missing prepared shader retained a pipeline output");
     cache.Save(artifact);

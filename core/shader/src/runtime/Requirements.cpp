@@ -6,7 +6,7 @@ void AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, 
     ValidateComputeArtifact(artifact);
     const auto& limits = context.GetProperties().limits;
     const auto& subgroups = context.GetSubgroupProperties();
-    if (subgroups.subgroupSize != artifact.waveSize || (subgroups.supportedStages & VK_SHADER_STAGE_COMPUTE_BIT) == 0) throw std::runtime_error("Offline compute pipeline requires a matching compute subgroup size");
+    if ((subgroups.supportedStages & VK_SHADER_STAGE_COMPUTE_BIT) == 0) throw std::runtime_error("Offline compute pipeline requires compute subgroup support");
     if (artifact.executionFlags != 0 || artifact.splitStateLanes != 0 || artifact.scratchPoolSlotDwords != 0) throw std::runtime_error("Offline compute pipeline execution extensions are not implemented");
     if (artifact.pushConstantOffset != 0 || artifact.stencilReference != UINT32_MAX || artifact.memoryOffsetCount != 0 || artifact.dispatchThreadLimit || artifact.runtimeImageCount != 0 || artifact.runtimeStateDwords != 0) throw std::runtime_error("Offline compute pipeline runtime data extensions are not implemented");
     if (!artifact.userRegisters.empty() && artifact.pushDataStart == UINT32_MAX) throw std::runtime_error("Offline compute pipeline external shader data is not implemented");

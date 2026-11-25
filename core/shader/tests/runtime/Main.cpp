@@ -3,15 +3,73 @@
 #include <anybox/ExceptionTest.hpp>
 #include "Commands.hpp"
 #include <cstring>
+#include <iostream>
 
 namespace {
 constexpr auto Source = R"(#version 450
 #extension GL_EXT_buffer_reference : require
+#extension GL_KHR_shader_subgroup_basic : require
 layout(local_size_x=1) in;
-layout(buffer_reference, std430, buffer_reference_align=4) buffer Data { uint value; };
+layout(buffer_reference, std430, buffer_reference_align=4) buffer Data { uint value; uint waveSize; };
 layout(push_constant) uniform Parameters { Data outputBuffer; uint value; } args;
-void main() { args.outputBuffer.value = args.value; }
+void main() { args.outputBuffer.value = args.value; args.outputBuffer.waveSize = gl_SubgroupSize; }
 )";
+
+void CheckDenseWave32(AnyBox::Vulkan::Context& context) {
+    using namespace AnyBox;
+    constexpr auto waveSize = Shader::PreparedComputeWaveSize;
+    if (!context.SupportsComputeFullSubgroups()) return;
+    if (context.GetSubgroupProperties().subgroupSize != waveSize && !context.CanRequireComputeSubgroupSize(waveSize, waveSize)) return;
+
+    constexpr auto source = R"(#version 450
+#extension GL_EXT_buffer_reference : require
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+layout(local_size_x=32) in;
+layout(buffer_reference, std430, buffer_reference_align=16) buffer Data { uvec4 lanes[32]; };
+layout(push_constant) uniform Parameters { Data outputBuffer; } args;
+void main() {
+    args.outputBuffer.lanes[gl_LocalInvocationIndex] = uvec4(gl_NumSubgroups, gl_SubgroupSize, gl_SubgroupInvocationID, subgroupBallotBitCount(subgroupBallot(true)));
+}
+)";
+    Shader::ComputeArtifact artifact;
+    artifact.sourceHash = Shader::HashShader(std::as_bytes(std::span(source, std::strlen(source))));
+    artifact.threads = {waveSize, 1, 1};
+    artifact.pushConstantSize = sizeof(VkDeviceAddress);
+    artifact.code = Vulkan::Tests::CompileCompute(source);
+    auto bytes = Shader::EncodeComputeArtifact(artifact);
+    auto loaded = Shader::DecodeComputeArtifact(bytes, artifact.sourceHash);
+    Shader::Runtime::ComputePipeline pipeline(context, loaded);
+
+    std::array<std::array<std::uint32_t, 4>, waveSize> values{};
+    constexpr auto usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    constexpr auto properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    auto output = Vulkan::Buffer::Allocate(context, sizeof(values), usage, properties);
+    auto mapped = output.Map();
+    std::memset(mapped.data(), 0, mapped.size());
+    auto address = output.GetAddress();
+    Vulkan::Tests::Commands commands(context);
+    auto command = commands.Begin();
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+    pipeline.GetPipeline().Dispatch(command, std::as_bytes(std::span(&address, 1)), {1, 1, 1});
+    barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+    commands.Submit(command);
+
+    std::memcpy(values.data(), mapped.data(), sizeof(values));
+    std::uint32_t lanes = 0;
+    for (const auto& [subgroups, width, lane, active] : values) {
+        if (subgroups != 1 || width != waveSize || lane >= waveSize || active != waveSize) throw std::runtime_error("Wave32 artifact did not execute a full subgroup");
+        lanes |= std::uint32_t{1} << lane;
+    }
+    if (lanes != UINT32_MAX) throw std::runtime_error("Wave32 artifact did not execute every lane ID");
+    std::cout << context.GetProperties().deviceName << " verified one wave32 subgroup with all 32 lanes active\n";
+}
 
 void Check() {
     using namespace AnyBox;
@@ -27,25 +85,38 @@ void Check() {
     if (pipeline.GetDescriptorLayout()) throw std::runtime_error("Descriptor-free shader created an unexpected descriptor layout");
     constexpr auto usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
     constexpr auto properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
-    auto output = Vulkan::Buffer::Allocate(context, 4, usage, properties);
-    std::memset(output.Map().data(), 0, output.Map().size());
+    auto output = Vulkan::Buffer::Allocate(context, 2 * sizeof(std::uint32_t), usage, properties);
+    auto mapped = output.Map();
     auto address = output.GetAddress();
     std::array constants{static_cast<std::uint32_t>(address), static_cast<std::uint32_t>(address >> 32), 0xABCDEF12u};
-    Vulkan::Tests::Commands commands(context);
-    auto command = commands.Begin();
-    VkMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
-    pipeline.GetPipeline().Dispatch(command, std::as_bytes(std::span(constants)), {1, 1, 1});
-    barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
-    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
-    commands.Submit(command);
-    std::uint32_t value;
-    std::memcpy(&value, output.Map().data(), sizeof(value));
-    if (value != constants[2]) throw std::runtime_error("Serialized compute pipeline returned an incorrect GPU result");
+    auto defaultSize = context.GetSubgroupProperties().subgroupSize;
+    auto checkDispatch = [&](const Vulkan::ComputePipeline& selected, std::uint32_t waveSize) {
+        std::memset(mapped.data(), 0, mapped.size());
+        Vulkan::Tests::Commands commands(context);
+        auto command = commands.Begin();
+        VkMemoryBarrier barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+        barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+        selected.Dispatch(command, std::as_bytes(std::span(constants)), {1, 1, 1});
+        barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+        context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+        commands.Submit(command);
+        std::array<std::uint32_t, 2> result{};
+        std::memcpy(result.data(), mapped.data(), sizeof(result));
+        if (result[0] != constants[2] || result[1] != waveSize) throw std::runtime_error("Compute pipeline returned an incorrect GPU result or subgroup size");
+        std::cout << context.GetProperties().deviceName << " executed a " << result[1] << "-lane subgroup; reported default " << defaultSize << '\n';
+    };
+    checkDispatch(pipeline.GetPipeline(), loaded.waveSize);
+    for (auto size : {8U, 16U, 32U, 64U}) {
+        if (size == defaultSize || !context.CanRequireComputeSubgroupSize(size)) continue;
+        Vulkan::ComputePipeline alternate(context, loaded.code, loaded.pushConstantSize, "main", {}, size);
+        checkDispatch(alternate, size);
+        break;
+    }
+    if (context.CanRequireComputeSubgroupSize(3) || context.CanRequireComputeSubgroupSize(loaded.waveSize, UINT64_MAX)) throw std::runtime_error("Invalid Vulkan compute subgroup requirement was accepted");
     auto reject = [&](auto invalid) {
         try { Shader::Runtime::ComputePipeline selected(context, invalid); }
         catch (const std::exception&) { return; }
@@ -59,6 +130,7 @@ void Check() {
     loaded = artifact;
     loaded.memoryOffsetCount = 1;
     reject(loaded);
+    CheckDenseWave32(context);
 }
 }
 

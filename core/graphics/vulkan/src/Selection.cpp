@@ -1,16 +1,28 @@
 #include <anybox/vulkan/Context.hpp>
 #include <algorithm>
+#include <bit>
 #include <cstring>
 
 void AnyBox::Vulkan::Context::selectAdapter(const AdapterSelection& selection, std::uint32_t queueCount) {
     findAdapter(selection);
     std::uint32_t count = 0;
+    Check(instanceFunctions.enumerateExtensions(physicalDevice, nullptr, &count, nullptr), "Count Vulkan device extensions");
+    std::vector<VkExtensionProperties> extensions(count);
+    Check(instanceFunctions.enumerateExtensions(physicalDevice, nullptr, &count, extensions.data()), "Enumerate Vulkan device extensions");
+    auto hasExtension = [&](const char* name) {
+        return std::ranges::any_of(extensions, [name](const auto& value) { return std::strcmp(value.extensionName, name) == 0; });
+    };
+    subgroupSizeExtension = hasExtension(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
     VkPhysicalDeviceExternalMemoryHostPropertiesEXT host{};
     host.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
     VkPhysicalDeviceIDProperties identity{};
     identity.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
     subgroups.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
     floatControls.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES;
+    if (subgroupSizeExtension) {
+        subgroupSizeLimits.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES;
+        floatControls.pNext = &subgroupSizeLimits;
+    }
     identity.pNext = &subgroups;
     subgroups.pNext = &floatControls;
     host.pNext = &identity;
@@ -31,12 +43,9 @@ void AnyBox::Vulkan::Context::selectAdapter(const AdapterSelection& selection, s
     auto family = std::ranges::find_if(families, [&](const auto& value) { return (value.queueFlags & required) == required && value.queueCount >= queueCount; });
     if (family == families.end()) throw std::runtime_error("Vulkan adapter has no universal queue family with the requested queue count");
     queueFamily = static_cast<std::uint32_t>(family - families.begin());
-    Check(instanceFunctions.enumerateExtensions(physicalDevice, nullptr, &count, nullptr), "Count Vulkan device extensions");
-    std::vector<VkExtensionProperties> extensions(count);
-    Check(instanceFunctions.enumerateExtensions(physicalDevice, nullptr, &count, extensions.data()), "Enumerate Vulkan device extensions");
-    if (std::ranges::none_of(extensions, [](const auto& value) { return std::strcmp(value.extensionName, VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME) == 0; })) throw std::runtime_error("Vulkan host memory imports are unsupported");
+    if (!hasExtension(VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME)) throw std::runtime_error("Vulkan host memory imports are unsupported");
     if (hostPointerAlignment == 0) throw std::runtime_error("Vulkan host pointer alignment is zero");
-    if (std::ranges::none_of(extensions, [](const auto& value) { return std::strcmp(value.extensionName, VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME) == 0; })) throw std::runtime_error("Vulkan Windows semaphore imports are unsupported");
+    if (!hasExtension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME)) throw std::runtime_error("Vulkan Windows semaphore imports are unsupported");
 }
 
 void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
@@ -46,6 +55,9 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     timeline.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
     VkPhysicalDevice8BitStorageFeatures storage{};
     storage.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES;
+    VkPhysicalDeviceSubgroupSizeControlFeatures subgroupFeatures{};
+    subgroupFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES;
+    if (subgroupSizeExtension) storage.pNext = &subgroupFeatures;
     timeline.pNext = &storage;
     address.pNext = &timeline;
     VkPhysicalDeviceFeatures2 features{};
@@ -63,6 +75,10 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     enabled.imageCubeArray = features.features.imageCubeArray;
     cubeArrays = enabled.imageCubeArray != VK_FALSE;
     byteStorage = storage.storageBuffer8BitAccess != VK_FALSE;
+    subgroupSizeControl = subgroupFeatures.subgroupSizeControl != VK_FALSE;
+    computeFullSubgroups = subgroupFeatures.computeFullSubgroups != VK_FALSE;
+    auto enableSubgroupExtension = subgroupSizeControl || computeFullSubgroups;
+    if (!enableSubgroupExtension) storage.pNext = nullptr;
     storage.uniformAndStorageBuffer8BitAccess = VK_FALSE;
     storage.storagePushConstant8 = VK_FALSE;
     address.bufferDeviceAddressCaptureReplay = VK_FALSE;
@@ -73,14 +89,20 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     queue.queueFamilyIndex = queueFamily;
     queue.queueCount = queueCount;
     queue.pQueuePriorities = priorities.data();
-    const char* extensions[]{VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME, VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME};
+    const char* extensions[]{VK_EXT_EXTERNAL_MEMORY_HOST_EXTENSION_NAME, VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME, VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME};
     VkDeviceCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     info.pNext = &address;
     info.pEnabledFeatures = &enabled;
     info.queueCreateInfoCount = 1;
     info.pQueueCreateInfos = &queue;
-    info.enabledExtensionCount = 2;
+    info.enabledExtensionCount = enableSubgroupExtension ? 3 : 2;
     info.ppEnabledExtensionNames = extensions;
     Check(instanceFunctions.createDevice(physicalDevice, &info, nullptr, &device), "Create Vulkan device");
+}
+
+bool AnyBox::Vulkan::Context::CanRequireComputeSubgroupSize(std::uint32_t size, std::uint64_t workgroupInvocations) const noexcept {
+    return subgroupSizeControl && (subgroupSizeLimits.requiredSubgroupSizeStages & VK_SHADER_STAGE_COMPUTE_BIT) != 0 &&
+        std::has_single_bit(size) && size >= subgroupSizeLimits.minSubgroupSize && size <= subgroupSizeLimits.maxSubgroupSize &&
+        workgroupInvocations <= static_cast<std::uint64_t>(size) * subgroupSizeLimits.maxComputeWorkgroupSubgroups;
 }

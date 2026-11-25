@@ -6,7 +6,7 @@ void AnyBox::Shader::ValidateComputeArtifact(const ComputeArtifact& artifact) { 
 
 void AnyBox::Shader::ArtifactFormat::Validate(const ComputeArtifact& artifact) {
     if (artifact.profile != 1 || artifact.runtimeVersion != 14 || artifact.bdaVersion != 1) throw std::invalid_argument("Shader artifact target profile or runtime ABI is incompatible");
-    if (artifact.waveSize != 32 || (artifact.executionFlags & ~15u) != 0) throw std::invalid_argument("Shader artifact wave or execution flags are incompatible");
+    if (artifact.waveSize != PreparedComputeWaveSize || (artifact.executionFlags & ~15u) != 0) throw std::invalid_argument("Shader artifact wave or execution flags are incompatible");
     std::uint64_t threads = 1;
     for (auto size : artifact.threads) {
         if (size == 0 || size > 1024) throw std::invalid_argument("Shader artifact workgroup dimension is invalid");
