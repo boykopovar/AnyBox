@@ -5,6 +5,8 @@
 #include <bit>
 
 namespace AnyBox::Graphics::Container::SerializedGraphics {
+std::span<const std::byte> ReadRegisters(std::span<const std::byte> state);
+
 inline std::uint8_t Byte(std::span<const std::byte> data, std::size_t offset) {
     if (offset >= data.size()) throw std::invalid_argument("Xbox serialized graphics byte is outside its payload");
     return std::to_integer<std::uint8_t>(data[offset]);

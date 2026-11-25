@@ -1,10 +1,15 @@
 #include "../Serialized.hpp"
 #include <anybox/graphics/container/SerializedGraphicsState.hpp>
+#include <anybox/graphics/container/SerializedGraphicsShader.hpp>
 #include <sstream>
 
 std::string AnyBox::Shader::Tools::InspectSerializedGraphicsState(std::span<const std::byte> state, std::span<const std::byte> auxiliary) {
     auto result = Graphics::Container::ReadSerializedGraphicsFixedState(state, auxiliary);
     std::ostringstream output;
+    for (auto stage : {Graphics::Container::NativeHardwareStage::Vertex, Graphics::Container::NativeHardwareStage::Pixel}) {
+        auto shader = Graphics::Container::ReadSerializedGraphicsShaderState(state, stage);
+        output << "stage=" << (stage == Graphics::Container::NativeHardwareStage::Vertex ? "vertex" : "pixel") << " user_registers=" << shader.userRegisters << " float_mode=" << shader.shader.floatControl << " dx10_clamp=" << shader.shader.dx10Clamp << " ieee_mode=" << shader.shader.ieeeMode << '\n';
+    }
     output << "targets=" << result.targetCount << " depth_format=" << result.depthFormat << " samples=" << result.samples << " quality=" << result.sampleQuality << " mask=" << result.sampleMask << " topology=" << result.topology << " strip_cut=" << result.stripCut << " alpha_coverage=" << result.alphaToCoverage << " independent_blend=" << result.independentBlend << '\n';
     const auto& rasterizer = result.rasterizer;
     output << "fill=" << rasterizer.fill << " cull=" << rasterizer.cull << " front_ccw=" << rasterizer.frontCounterClockwise << " depth_clip=" << rasterizer.depthClip << " depth_bias=" << rasterizer.depthBias << " clamp=" << rasterizer.depthBiasClamp << " slope=" << rasterizer.slopeScaledDepthBias << " forced_samples=" << rasterizer.forcedSampleCount << " conservative=" << rasterizer.conservative << " multisample=" << rasterizer.multisample << " antialiased_line=" << rasterizer.antialiasedLine << '\n';
