@@ -46,6 +46,7 @@ target_include_directories(anybox_shader_requirements PUBLIC include)
 
 if(BUILD_TESTING)
     add_executable(shader_native_frontend_tests tests/native/Main.cpp ../graphics/container/tests/NativeFixtures.cpp)
+    target_sources(shader_native_frontend_tests PRIVATE tests/native/Raw.cpp)
     target_sources(shader_native_frontend_tests PRIVATE tests/native/Compute.cpp tests/native/Pixel.cpp)
     target_sources(shader_native_frontend_tests PRIVATE tests/native/Linkage.cpp)
     target_sources(shader_native_frontend_tests PRIVATE tests/native/Vertex.cpp)

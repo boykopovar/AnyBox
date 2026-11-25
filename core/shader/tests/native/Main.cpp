@@ -5,6 +5,7 @@
 #include <utility>
 
 void CheckNativeCompute();
+void CheckRawNativeFrontend();
 void CheckNativePixel();
 void CheckNativeLinkage();
 void CheckNativeVertex();
@@ -27,6 +28,7 @@ void CheckBallotLoopGuards();
 int main() {
     return AnyBox::Tests::Run([] {
         CheckNativeCompute();
+        CheckRawNativeFrontend();
         CheckNativePixel();
         CheckNativeLinkage();
         CheckNativeVertex();

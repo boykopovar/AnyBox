@@ -7,10 +7,19 @@
 #include <stdexcept>
 
 AnyBox::Shader::NativeFrontend::NativeFrontend(std::span<const std::byte> program) {
-    if (ShaderRecompiler::GcnGuestShaders()) throw std::logic_error("Xbox native program requires RDNA decoding mode");
     Graphics::Container::FssmView view(program);
-    auto bytes = view.GetCode();
-    waveSize = view.GetWaveSize();
+    initialize(view.GetCode(), view.GetWaveSize());
+}
+
+AnyBox::Shader::NativeFrontend::NativeFrontend(std::span<const std::byte> instructions, std::uint32_t selectedWaveSize) {
+    initialize(instructions, selectedWaveSize);
+}
+
+void AnyBox::Shader::NativeFrontend::initialize(std::span<const std::byte> bytes, std::uint32_t selectedWaveSize) {
+    if (ShaderRecompiler::GcnGuestShaders()) throw std::logic_error("Xbox native program requires RDNA decoding mode");
+    if (selectedWaveSize != 32 && selectedWaveSize != 64) throw std::invalid_argument("Xbox native program wave size is invalid");
+    if (bytes.empty() || bytes.size() % 4 != 0) throw std::invalid_argument("Xbox native instruction stream size is invalid");
+    waveSize = selectedWaveSize;
     code.resize(bytes.size() / 4);
     for (std::size_t word = 0; word < code.size(); ++word) {
         for (unsigned byte = 0; byte < 4; ++byte) code[word] |= std::to_integer<std::uint32_t>(bytes[word * 4 + byte]) << (byte * 8);
