@@ -27,7 +27,7 @@ long D3D12CreateRootSignatureDeserializer(const void* sourceData, std::size_t so
     auto bytes = std::span(static_cast<const std::byte*>(sourceData), sourceDataSize);
     auto flags = AnyBox::Graphics::ReadSerializedRootFlags(bytes);
     if ((flags & ~0x83000FFFU) != 0) throw std::invalid_argument("Unsupported Xbox root signature flags");
-    if ((flags & AnyBox::Graphics::XboxRootSignatureFlags) == 0) {
+    if ((flags & AnyBox::Graphics::PreservedRootSignatureFlags) == 0) {
         *deserializer = owned.release();
         return result;
     }

@@ -20,9 +20,9 @@ long D3D12SerializeVersionedRootSignature(const D3D12VersionedRootSignatureDescr
     if (!description) throw std::invalid_argument("Root signature description is null");
     auto flags = AnyBox::Graphics::GetRootSignatureFlags(*description);
     auto hostDescription = *description;
-    if ((flags & AnyBox::Graphics::XboxRootSignatureFlags) != 0) {
+    if ((flags & AnyBox::Graphics::PreservedRootSignatureFlags) != 0) {
         if ((flags & D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE) != 0) throw std::invalid_argument("A local root signature cannot contain additional root signature flags");
-        AnyBox::Graphics::SetRootSignatureFlags(hostDescription, flags & ~AnyBox::Graphics::XboxRootSignatureFlags);
+        AnyBox::Graphics::SetRootSignatureFlags(hostDescription, flags & ~AnyBox::Graphics::PreservedRootSignatureFlags);
     }
 
     static auto serialize = AnyBox::Graphics::GetHostLibrary().Get<PFN_D3D12_SERIALIZE_VERSIONED_ROOT_SIGNATURE>("D3D12SerializeVersionedRootSignature");
@@ -42,7 +42,7 @@ long D3D12SerializeVersionedRootSignature(const D3D12VersionedRootSignatureDescr
         throw std::system_error(static_cast<int>(result), std::system_category(), message);
     }
     if (!output) throw std::runtime_error("Root signature serializer returned no blob");
-    if ((flags & AnyBox::Graphics::XboxRootSignatureFlags) != 0) AnyBox::Graphics::SetSerializedRootFlags(*output, flags);
+    if ((flags & AnyBox::Graphics::PreservedRootSignatureFlags) != 0) AnyBox::Graphics::SetSerializedRootFlags(*output, flags);
     *blob = ownedOutput.release();
     if (errorBlob) *errorBlob = ownedDiagnostics.release();
     return result;

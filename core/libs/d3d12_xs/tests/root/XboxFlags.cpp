@@ -76,7 +76,7 @@ void Reject(std::uint32_t flags) {
 
 void CheckXboxRootFlags() {
     for (auto version : {D3D_ROOT_SIGNATURE_VERSION_1_0, D3D_ROOT_SIGNATURE_VERSION_1_1}) {
-        for (auto flags : {0x01000000U, 0x02000000U, 0x03000000U, 0x80000000U, 0x83000000U}) {
+        for (auto flags : {0x400U, 0x800U, 0xC00U, 0x01000000U, 0x02000000U, 0x03000000U, 0x80000000U, 0x83000000U, 0x83000C00U}) {
             Check(version, flags);
             Check(version, flags | D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
         }
@@ -84,4 +84,7 @@ void CheckXboxRootFlags() {
     Reject<std::system_error>(0x04000000);
     Reject<std::system_error>(0x03001000);
     Reject<std::invalid_argument>(0x03000080);
+    Reject<std::invalid_argument>(0x480);
+    Reject<std::invalid_argument>(0x880);
+    Reject<std::invalid_argument>(0xC80);
 }
