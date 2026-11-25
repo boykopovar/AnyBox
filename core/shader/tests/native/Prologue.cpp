@@ -31,6 +31,15 @@ void CheckNativeHashPrologue() {
         CheckSpirvValidation(compiled.code);
     }
     for (std::size_t size = 0; size < 36; size += 4) Reject<std::exception>([&] { NativeFrontend rejected(std::span(bytes).first(size), 32); });
+    for (auto selection : {1u, 2u, 3u}) {
+        auto variant = bytes;
+        Set(variant, 4, words[1] | ((selection & 1) << 16));
+        Set(variant, 16, words[4] | ((selection & 2) << 15));
+        NativeFrontend frontend(variant, 32);
+        Require(frontend.GetDecoded().instructions.size() == 4);
+        Require(frontend.GetDecoded().instructions[0].rawWords[1] == (words[1] | ((selection & 1) << 16)));
+        Require(frontend.GetDecoded().instructions[1].rawWords[1] == (words[4] | ((selection & 2) << 15)));
+    }
     for (auto offset : {0u, 4u, 12u, 16u, 24u, 28u}) {
         auto invalid = bytes;
         Set(invalid, offset, 0);

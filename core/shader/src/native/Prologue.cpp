@@ -7,7 +7,7 @@
 bool AnyBox::Shader::NormalizeNativeHashPrologue(std::span<const std::uint32_t> code, std::vector<std::uint32_t>& normalized) {
     if (code.size() < 9) return false;
     for (std::size_t index = 0; index < 6; index += 3) {
-        if ((code[index] & 0xFFFF0000u) != 0xD5800000u || (code[index + 1] & 0xFFFF0000u) != 0x03FE0000u) return false;
+        if ((code[index] & 0xFFFF0000u) != 0xD5800000u || (code[index + 1] & 0xFFFE0000u) != 0x03FE0000u) return false;
     }
     if (code[6] != 0xD5800000u || code[7] != 0x03FE0100u) return false;
     normalized.assign(code.begin(), code.end());
