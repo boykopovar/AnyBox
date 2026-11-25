@@ -3,7 +3,7 @@
 
 AnyBox::Graphics::TextureFormatDescription AnyBox::Graphics::TextureFormat(DXGI_FORMAT format) {
     struct Entry { DXGI_FORMAT source; VkFormat target; std::uint32_t hardware; };
-    constexpr std::array<Entry, 24> formats{{
+    constexpr std::array<Entry, 25> formats{{
         {DXGI_FORMAT_R32G32B32A32_FLOAT, VK_FORMAT_R32G32B32A32_SFLOAT, 77},
         {DXGI_FORMAT_R32G32B32A32_UINT, VK_FORMAT_R32G32B32A32_UINT, 75},
         {DXGI_FORMAT_R32G32B32A32_SINT, VK_FORMAT_R32G32B32A32_SINT, 76},
@@ -15,6 +15,7 @@ AnyBox::Graphics::TextureFormatDescription AnyBox::Graphics::TextureFormat(DXGI_
         {DXGI_FORMAT_R32G32_FLOAT, VK_FORMAT_R32G32_SFLOAT, 64},
         {DXGI_FORMAT_R32G32_UINT, VK_FORMAT_R32G32_UINT, 62},
         {DXGI_FORMAT_R32G32_SINT, VK_FORMAT_R32G32_SINT, 63},
+        {DXGI_FORMAT_R11G11B10_FLOAT, VK_FORMAT_B10G11R11_UFLOAT_PACK32, 36},
         {DXGI_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, 56},
         {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, VK_FORMAT_R8G8B8A8_SRGB, 130},
         {DXGI_FORMAT_R8G8B8A8_UINT, VK_FORMAT_R8G8B8A8_UINT, 60},

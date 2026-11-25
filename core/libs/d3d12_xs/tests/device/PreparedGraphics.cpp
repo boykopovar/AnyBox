@@ -7,6 +7,7 @@
 #include "../../../../graphics/vulkan/tests/Tests.hpp"
 
 void CheckPreparedGraphicsModes(AnyBox::Graphics::Device* device, AnyBox::Graphics::RootSignature* root, std::span<const std::byte> vertex, std::span<const std::byte> pixel);
+void CheckPreparedGraphicsFormats(AnyBox::Graphics::Device* device, AnyBox::Graphics::RootSignature* root, AnyBox::Graphics::Tests::PreparedCache& cache, AnyBox::Shader::GraphicsArtifact vertex, AnyBox::Shader::GraphicsArtifact pixel, std::span<const std::byte> vertexSource, std::span<const std::byte> pixelSource);
 void CheckPreparedGraphicsInitial(AnyBox::Graphics::Device* device, AnyBox::Graphics::PipelineState* pipeline);
 
 void CheckPreparedGraphics(AnyBox::Graphics::Device* device) {
@@ -61,6 +62,7 @@ void CheckPreparedGraphics(AnyBox::Graphics::Device* device) {
     Reject<std::logic_error>([&] { pipeline->GetHost(); });
     CheckPreparedGraphicsInitial(device, pipeline);
     CheckPreparedGraphicsModes(device, fixture.GetRoot(), vertexSource, pixelSource);
+    CheckPreparedGraphicsFormats(device, fixture.GetRoot(), cache, vertex, pixel, vertexSource, pixelSource);
     Reject<std::invalid_argument>([&] { Method<decltype(&CommandList::SetPipelineState)>(fixture.GetList(), 25)(fixture.GetList(), pipeline); });
     Require(!fixture.GetList()->GetPipelineState(), "Compute command list retained a graphics pipeline");
     Require(Method<decltype(&PipelineState::Release)>(pipeline, 2)(pipeline) == 0, "Prepared graphics pipeline retained its final reference");
