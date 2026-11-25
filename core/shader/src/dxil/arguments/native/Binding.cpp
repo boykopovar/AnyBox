@@ -2,11 +2,14 @@
 #include <stdexcept>
 #include <string>
 
-void AnyBox::Shader::ValidateNativeComputeRootLayout(const Graphics::Container::RootSignatureLayout& layout) {
-    if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native compute root signature version or flags are invalid");
+void AnyBox::Shader::ValidateNativeRootLayout(const Graphics::Container::RootSignatureLayout& layout, std::uint32_t visibility) {
+    if (visibility != 0 && visibility != 1 && visibility != 5) throw std::runtime_error("Native root shader stage is not implemented");
+    if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native root signature version or flags are invalid");
+    auto denied = visibility == 1 ? 2u : visibility == 5 ? 32u : 0u;
+    if ((layout.flags & denied) != 0) throw std::invalid_argument("Native root signature denies access to the shader stage");
 }
 
-void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind, NativeRootBindingMode mode) {
+void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind, NativeRootBindingMode mode, std::uint32_t visibility) {
     using namespace Graphics::Container;
     if (mode != NativeRootBindingMode::LogicalRegisters && mode != NativeRootBindingMode::SerializedSlots) throw std::invalid_argument("Native root binding validation mode is invalid");
     if (binding.registerCount == 0) {
@@ -16,7 +19,7 @@ void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSi
     if (binding.firstUserRegister >= 128 || binding.registerCount > 128u - binding.firstUserRegister) throw std::invalid_argument("Native root binding register range exceeds the artifact ABI capacity");
     if (binding.rootParameter >= layout.parameters.size()) throw std::invalid_argument("Native root binding parameter is outside the signature");
     const auto& parameter = layout.parameters[binding.rootParameter];
-    if (parameter.visibility != 0) throw std::invalid_argument("Native compute root binding is hidden by its shader visibility");
+    if (parameter.visibility != 0 && parameter.visibility != visibility) throw std::invalid_argument("Native root binding is hidden by its shader visibility");
     if (binding.kind == NativeRootKind::Table) {
         if (parameter.kind != RootParameterKind::Table || binding.registerCount != 1) throw std::invalid_argument("Native descriptor table binding disagrees with its root parameter");
         std::uint64_t cursor = 0;

@@ -6,6 +6,6 @@
 #include <anybox/shader/NativeRootArgumentWriter.hpp>
 
 namespace AnyBox::Shader {
-void ValidateNativeComputeRootLayout(const Graphics::Container::RootSignatureLayout& layout);
-void ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind = std::nullopt, NativeRootBindingMode mode = NativeRootBindingMode::LogicalRegisters);
+void ValidateNativeRootLayout(const Graphics::Container::RootSignatureLayout& layout, std::uint32_t visibility);
+void ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind = std::nullopt, NativeRootBindingMode mode = NativeRootBindingMode::LogicalRegisters, std::uint32_t visibility = 0);
 }
