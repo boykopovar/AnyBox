@@ -7,6 +7,7 @@
 
 void CheckMemoryTable();
 void CheckGraphicsProgram(AnyBox::Vulkan::Context& context);
+void CheckNativePixelInterpolation(AnyBox::Vulkan::Context& context);
 void CheckComputeBindings(AnyBox::Vulkan::Context& context);
 void CheckExternalShaderData(AnyBox::Vulkan::Context& context);
 void CheckComputeResourceSets(AnyBox::Vulkan::Context& context);
@@ -30,6 +31,7 @@ void Check() {
     CheckExtendedImageGather(context);
     CheckComputeResourceLimits(context);
     CheckGraphicsProgram(context);
+    CheckNativePixelInterpolation(context);
     CheckComputeBindings(context);
     CheckExternalShaderData(context);
     Shader::ComputeArtifact artifact;
