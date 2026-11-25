@@ -61,6 +61,7 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     enabled.textureCompressionETC2 = features.features.textureCompressionETC2;
     enabled.textureCompressionASTC_LDR = features.features.textureCompressionASTC_LDR;
     enabled.imageCubeArray = features.features.imageCubeArray;
+    enabled.shaderImageGatherExtended = features.features.shaderImageGatherExtended;
     enabled.shaderStorageImageWriteWithoutFormat = features.features.shaderStorageImageWriteWithoutFormat;
     enabled.shaderStorageImageReadWithoutFormat = features.features.shaderStorageImageReadWithoutFormat;
     enabled.shaderStorageImageExtendedFormats = features.features.shaderStorageImageExtendedFormats;

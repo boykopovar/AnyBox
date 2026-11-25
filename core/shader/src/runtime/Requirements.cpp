@@ -2,6 +2,7 @@
 #include <anybox/shader/runtime/ComputePipeline.hpp>
 #include <spirv/unified1/spirv.hpp>
 #include <stdexcept>
+#include <string>
 
 void AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, const ComputeArtifact& artifact) {
     ValidateComputeArtifact(artifact);
@@ -36,6 +37,9 @@ void AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, 
             case spv::CapabilityImage1D:
             case spv::CapabilityImageQuery:
             case spv::CapabilityPhysicalStorageBufferAddresses: break;
+            case spv::CapabilityImageGatherExtended:
+                if (!context.GetEnabledFeatures().shaderImageGatherExtended) throw std::runtime_error("Offline compute pipeline requires extended image gather operations");
+                break;
             case spv::CapabilityStorageImageWriteWithoutFormat:
                 if (!context.GetEnabledFeatures().shaderStorageImageWriteWithoutFormat) throw std::runtime_error("Offline compute pipeline requires formatless storage image writes");
                 break;
@@ -57,7 +61,7 @@ void AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, 
             case spv::CapabilitySignedZeroInfNanPreserve:
                 if (!context.GetFloatControls().shaderSignedZeroInfNanPreserveFloat32) throw std::runtime_error("Offline compute pipeline requires float32 signed zero, infinity and NaN preservation");
                 break;
-            default: throw std::runtime_error("Offline compute pipeline capability is not implemented for this target profile");
+            default: throw std::runtime_error("Offline compute pipeline capability is not implemented for this target profile: " + std::to_string(capability));
         }
         if ((subgroups.supportedOperations & required) != required) throw std::runtime_error("Offline compute pipeline requires unsupported subgroup operations");
     }

@@ -11,6 +11,7 @@ void CheckComputeBindings(AnyBox::Vulkan::Context& context);
 void CheckExternalShaderData(AnyBox::Vulkan::Context& context);
 void CheckComputeResourceSets(AnyBox::Vulkan::Context& context);
 void CheckComputeResourceLimits(AnyBox::Vulkan::Context& context);
+void CheckExtendedImageGather(AnyBox::Vulkan::Context& context);
 
 namespace {
 constexpr auto Source = R"(#version 450
@@ -26,6 +27,7 @@ void Check() {
     CheckMemoryTable();
     Vulkan::Context context(0);
     CheckComputeResourceSets(context);
+    CheckExtendedImageGather(context);
     CheckComputeResourceLimits(context);
     CheckGraphicsProgram(context);
     CheckComputeBindings(context);
