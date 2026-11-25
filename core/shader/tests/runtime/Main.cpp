@@ -6,6 +6,7 @@
 #include <cstring>
 
 void CheckMemoryTable();
+void CheckGraphicsProgram(AnyBox::Vulkan::Context& context);
 void CheckComputeBindings(AnyBox::Vulkan::Context& context);
 void CheckExternalShaderData(AnyBox::Vulkan::Context& context);
 
@@ -22,6 +23,7 @@ void Check() {
     using namespace AnyBox;
     CheckMemoryTable();
     Vulkan::Context context(0);
+    CheckGraphicsProgram(context);
     CheckComputeBindings(context);
     CheckExternalShaderData(context);
     Shader::ComputeArtifact artifact;
