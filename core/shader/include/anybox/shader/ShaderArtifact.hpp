@@ -7,6 +7,7 @@
 namespace AnyBox::Shader {
 using ShaderDigest = std::array<std::byte, 32>;
 ShaderDigest HashShader(std::span<const std::byte> data);
+ShaderDigest HashShaderParts(std::span<const std::span<const std::byte>> parts);
 std::string DigestName(const ShaderDigest& digest);
 
 struct ArtifactDescriptor {

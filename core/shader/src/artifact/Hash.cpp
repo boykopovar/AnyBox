@@ -26,15 +26,21 @@ struct HashDeleter {
 }
 
 AnyBox::Shader::ShaderDigest AnyBox::Shader::HashShader(std::span<const std::byte> data) {
-    if (data.size() > std::numeric_limits<ULONG>::max()) throw std::length_error("Shader digest input exceeds the Windows hash API limit");
+    return HashShaderParts(std::array{data});
+}
+
+AnyBox::Shader::ShaderDigest AnyBox::Shader::HashShaderParts(std::span<const std::span<const std::byte>> parts) {
     ShaderDigest result;
     static Algorithm algorithm;
     BCRYPT_HASH_HANDLE handle = nullptr;
     CheckStatus(BCryptCreateHash(algorithm.GetHandle(), &handle, nullptr, 0, nullptr, 0, 0));
     std::unique_ptr<void, HashDeleter> hash(handle);
-    auto* input = reinterpret_cast<PUCHAR>(const_cast<std::byte*>(data.data()));
     auto* output = reinterpret_cast<PUCHAR>(result.data());
-    if (!data.empty()) CheckStatus(BCryptHashData(handle, input, static_cast<ULONG>(data.size()), 0));
+    for (auto data : parts) {
+        if (data.size() > std::numeric_limits<ULONG>::max()) throw std::length_error("Shader digest input exceeds the Windows hash API limit");
+        auto* input = reinterpret_cast<PUCHAR>(const_cast<std::byte*>(data.data()));
+        if (!data.empty()) CheckStatus(BCryptHashData(handle, input, static_cast<ULONG>(data.size()), 0));
+    }
     CheckStatus(BCryptFinishHash(handle, output, static_cast<ULONG>(result.size()), 0));
     return result;
 }
