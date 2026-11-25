@@ -50,3 +50,4 @@ target_include_directories(anybox_shader_requirements PUBLIC include)
 include(tests/Tests.cmake)
 
 include(src/plan/Plan.cmake)
+include(src/serialized/Serialized.cmake)
