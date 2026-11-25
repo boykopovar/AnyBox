@@ -2,7 +2,7 @@
 #include <spirv/unified1/spirv.hpp>
 #include <stdexcept>
 
-std::uint32_t AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, const ComputeArtifact& artifact) {
+void AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& context, const ComputeArtifact& artifact) {
     ValidateComputeArtifact(artifact);
     const auto& limits = context.GetProperties().limits;
     const auto& subgroups = context.GetSubgroupProperties();
@@ -17,8 +17,6 @@ std::uint32_t AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& 
         threads *= artifact.threads[index];
     }
     if (threads > limits.maxComputeWorkGroupInvocations) throw std::runtime_error("Offline compute pipeline workgroup size exceeds the device limit");
-    auto requiredSize = subgroups.subgroupSize == artifact.waveSize ? 0U : artifact.waveSize;
-    if (requiredSize && !context.CanRequireComputeSubgroupSize(requiredSize, threads)) throw std::runtime_error("Offline compute pipeline requires a matching compute subgroup size");
 
     for (std::size_t offset = 5; offset < artifact.code.size(); offset += artifact.code[offset] >> 16) {
         if ((artifact.code[offset] & 65535) != spv::OpCapability) continue;
@@ -45,5 +43,4 @@ std::uint32_t AnyBox::Shader::Runtime::CheckRequirements(const Vulkan::Context& 
         }
         if ((subgroups.supportedOperations & required) != required) throw std::runtime_error("Offline compute pipeline requires unsupported subgroup operations");
     }
-    return requiredSize;
 }

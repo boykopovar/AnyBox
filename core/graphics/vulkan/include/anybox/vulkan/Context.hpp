@@ -25,6 +25,7 @@ public:
     const VkPhysicalDeviceProperties& GetProperties() const noexcept { return properties; }
     const VkPhysicalDeviceSubgroupProperties& GetSubgroupProperties() const noexcept { return subgroups; }
     bool CanRequireComputeSubgroupSize(std::uint32_t size, std::uint64_t workgroupInvocations = 1) const noexcept;
+    bool SupportsComputeFullSubgroups() const noexcept { return computeFullSubgroups; }
     const VkPhysicalDeviceFloatControlsProperties& GetFloatControls() const noexcept { return floatControls; }
     const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const noexcept { return memoryProperties; }
     VkDeviceSize GetHostPointerAlignment() const noexcept { return hostPointerAlignment; }
@@ -68,5 +69,6 @@ private:
     bool byteStorage = false;
     bool subgroupSizeExtension = false;
     bool subgroupSizeControl = false;
+    bool computeFullSubgroups = false;
 };
 }

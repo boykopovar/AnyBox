@@ -41,7 +41,7 @@ void RunGpu(AnyBox::Vulkan::Context& context, const AnyBox::Shader::Dxil::Comput
     Descriptors descriptors(context, table, faults);
     std::array layouts{descriptors.GetLayout()};
     std::array sets{descriptors.GetSet()};
-    ComputePipeline pipeline(context, shader.code, shader.bindings.pushConstantSizeBytes, "main", layouts);
+    ComputePipeline pipeline(context, shader.code, shader.bindings.pushConstantSizeBytes, "main", layouts, shader.hostSubgroupSize);
     AnyBox::Vulkan::Tests::Commands commands(context);
     auto buffer = commands.Begin();
     VkMemoryBarrier barrier{};

@@ -15,6 +15,62 @@ layout(push_constant) uniform Parameters { Data outputBuffer; uint value; } args
 void main() { args.outputBuffer.value = args.value; args.outputBuffer.waveSize = gl_SubgroupSize; }
 )";
 
+void CheckDenseWave32(AnyBox::Vulkan::Context& context) {
+    using namespace AnyBox;
+    constexpr auto waveSize = Shader::PreparedComputeWaveSize;
+    if (!context.SupportsComputeFullSubgroups()) return;
+    if (context.GetSubgroupProperties().subgroupSize != waveSize && !context.CanRequireComputeSubgroupSize(waveSize, waveSize)) return;
+
+    constexpr auto source = R"(#version 450
+#extension GL_EXT_buffer_reference : require
+#extension GL_KHR_shader_subgroup_basic : require
+#extension GL_KHR_shader_subgroup_ballot : require
+layout(local_size_x=32) in;
+layout(buffer_reference, std430, buffer_reference_align=16) buffer Data { uvec4 lanes[32]; };
+layout(push_constant) uniform Parameters { Data outputBuffer; } args;
+void main() {
+    args.outputBuffer.lanes[gl_LocalInvocationIndex] = uvec4(gl_NumSubgroups, gl_SubgroupSize, gl_SubgroupInvocationID, subgroupBallotBitCount(subgroupBallot(true)));
+}
+)";
+    Shader::ComputeArtifact artifact;
+    artifact.sourceHash = Shader::HashShader(std::as_bytes(std::span(source, std::strlen(source))));
+    artifact.threads = {waveSize, 1, 1};
+    artifact.pushConstantSize = sizeof(VkDeviceAddress);
+    artifact.code = Vulkan::Tests::CompileCompute(source);
+    auto bytes = Shader::EncodeComputeArtifact(artifact);
+    auto loaded = Shader::DecodeComputeArtifact(bytes, artifact.sourceHash);
+    Shader::Runtime::ComputePipeline pipeline(context, loaded);
+
+    std::array<std::array<std::uint32_t, 4>, waveSize> values{};
+    constexpr auto usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    constexpr auto properties = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    auto output = Vulkan::Buffer::Allocate(context, sizeof(values), usage, properties);
+    auto mapped = output.Map();
+    std::memset(mapped.data(), 0, mapped.size());
+    auto address = output.GetAddress();
+    Vulkan::Tests::Commands commands(context);
+    auto command = commands.Begin();
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+    pipeline.GetPipeline().Dispatch(command, std::as_bytes(std::span(&address, 1)), {1, 1, 1});
+    barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_HOST_READ_BIT;
+    context.GetFunctions().pipelineBarrier(command, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 1, &barrier, 0, nullptr, 0, nullptr);
+    commands.Submit(command);
+
+    std::memcpy(values.data(), mapped.data(), sizeof(values));
+    std::uint32_t lanes = 0;
+    for (const auto& [subgroups, width, lane, active] : values) {
+        if (subgroups != 1 || width != waveSize || lane >= waveSize || active != waveSize) throw std::runtime_error("Wave32 artifact did not execute a full subgroup");
+        lanes |= std::uint32_t{1} << lane;
+    }
+    if (lanes != UINT32_MAX) throw std::runtime_error("Wave32 artifact did not execute every lane ID");
+    std::cout << context.GetProperties().deviceName << " verified one wave32 subgroup with all 32 lanes active\n";
+}
+
 void Check() {
     using namespace AnyBox;
     Vulkan::Context context(0);
@@ -74,6 +130,7 @@ void Check() {
     loaded = artifact;
     loaded.memoryOffsetCount = 1;
     reject(loaded);
+    CheckDenseWave32(context);
 }
 }
 

@@ -76,8 +76,9 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     cubeArrays = enabled.imageCubeArray != VK_FALSE;
     byteStorage = storage.storageBuffer8BitAccess != VK_FALSE;
     subgroupSizeControl = subgroupFeatures.subgroupSizeControl != VK_FALSE;
-    subgroupFeatures.computeFullSubgroups = VK_FALSE;
-    if (!subgroupSizeControl) storage.pNext = nullptr;
+    computeFullSubgroups = subgroupFeatures.computeFullSubgroups != VK_FALSE;
+    auto enableSubgroupExtension = subgroupSizeControl || computeFullSubgroups;
+    if (!enableSubgroupExtension) storage.pNext = nullptr;
     storage.uniformAndStorageBuffer8BitAccess = VK_FALSE;
     storage.storagePushConstant8 = VK_FALSE;
     address.bufferDeviceAddressCaptureReplay = VK_FALSE;
@@ -95,7 +96,7 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     info.pEnabledFeatures = &enabled;
     info.queueCreateInfoCount = 1;
     info.pQueueCreateInfos = &queue;
-    info.enabledExtensionCount = subgroupSizeControl ? 3 : 2;
+    info.enabledExtensionCount = enableSubgroupExtension ? 3 : 2;
     info.ppEnabledExtensionNames = extensions;
     Check(instanceFunctions.createDevice(physicalDevice, &info, nullptr, &device), "Create Vulkan device");
 }

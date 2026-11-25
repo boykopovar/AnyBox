@@ -4,5 +4,5 @@
 #include <anybox/vulkan/Context.hpp>
 
 namespace AnyBox::Shader::Runtime {
-std::uint32_t CheckRequirements(const Vulkan::Context& context, const ComputeArtifact& artifact);
+void CheckRequirements(const Vulkan::Context& context, const ComputeArtifact& artifact);
 }

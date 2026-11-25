@@ -5,7 +5,7 @@
 using namespace AnyBox::Shader::Runtime;
 
 ComputePipeline::ComputePipeline(AnyBox::Vulkan::Context& context, const ComputeArtifact& artifact) : context(context) {
-    auto requiredSubgroupSize = CheckRequirements(context, artifact);
+    CheckRequirements(context, artifact);
     std::vector<VkDescriptorSetLayoutBinding> bindings;
     for (const auto& descriptor : artifact.descriptors) {
         if (descriptor.kind != 59 && descriptor.kind != 60) throw std::runtime_error("Offline compute pipeline descriptor kind is not implemented");
@@ -22,7 +22,7 @@ ComputePipeline::ComputePipeline(AnyBox::Vulkan::Context& context, const Compute
             Vulkan::Check(context.GetFunctions().createDescriptorSetLayout(context.GetDevice(), &description, nullptr, &descriptorLayout), "Create offline compute descriptor layout");
             layouts.push_back(descriptorLayout);
         }
-        pipeline = std::make_unique<Vulkan::ComputePipeline>(context, artifact.code, artifact.pushConstantSize, "main", layouts, requiredSubgroupSize);
+        pipeline = std::make_unique<Vulkan::ComputePipeline>(context, artifact.code, artifact.pushConstantSize, "main", layouts, artifact.waveSize);
     } catch (...) {
         if (descriptorLayout) context.GetFunctions().destroyDescriptorSetLayout(context.GetDevice(), descriptorLayout, nullptr);
         throw;

@@ -52,6 +52,7 @@ AnyBox::Shader::ComputeCompilation AnyBox::Shader::CompileCompute(ShaderRecompil
     ShaderInfoCollector{}.Collect(program, stage);
     auto allocation = BindingAllocator{}.Allocate(program, layout, target.registrationModules);
     ComputeCompilation result;
+    result.hostSubgroupSize = input.hostSubgroupSize;
     result.bindings = std::move(static_cast<CompiledBindingLayout&>(allocation));
     result.code = SpirvEmitter{}.Emit(program, stage, result.bindings, target, &result.info);
     ValidateSpirv(result.code, target.vulkanVersion);
