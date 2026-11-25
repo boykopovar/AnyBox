@@ -1,8 +1,10 @@
 #include "Serialized.hpp"
+#include "AuditTarget.hpp"
 #include <anybox/graphics/container/Fspx.hpp>
 #include <anybox/graphics/container/FspxDispatch.hpp>
 #include <anybox/shader/Artifact.hpp>
 #include <anybox/shader/Native.hpp>
+#include <anybox/shader/NativeCompute.hpp>
 #include <RdnaDecoder/RdnaInstructionDecoder.hpp>
 #include <sstream>
 
@@ -38,5 +40,20 @@ std::string AnyBox::Shader::Tools::InspectSerializedInstructions(std::span<const
     std::ostringstream output;
     output << "wave=" << waveSize << " instructions=" << frontend.GetDecoded().instructions.size() << " blocks=" << frontend.GetGraph().blocks.size() << '\n';
     for (const auto& instruction : frontend.GetDecoded().instructions) output << ShaderRecompiler::RdnaInstructionToString(instruction) << '\n';
+    return output.str();
+}
+
+std::string AnyBox::Shader::Tools::AuditSerializedCompute(std::span<const std::byte> data) {
+    Graphics::Container::FspxView view(ReadPayload(data));
+    auto state = Graphics::Container::ReadSerializedComputeState(view.GetDispatchState());
+    NativeFrontend frontend(view.GetCode(), state.waveSize);
+    auto compiled = CompileNativeCompute(frontend, state.shader, AuditTarget(), {0, 0, 0, 128});
+    const auto& layout = compiled.bindings.layout;
+    std::ostringstream output;
+    output << "words=" << compiled.code.size() << " images=" << layout.runtimeImageCount << " push_bytes=" << compiled.bindings.pushConstantSizeBytes << " user_registers=";
+    for (auto index : layout.userDataRegisters) output << index << ',';
+    output << "\ndescriptors=";
+    for (const auto& descriptor : layout.descriptors) output << static_cast<std::uint32_t>(descriptor.kind) << ':' << descriptor.resources.size() << ',';
+    output << '\n';
     return output.str();
 }

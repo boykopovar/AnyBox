@@ -14,6 +14,11 @@
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 3 && std::string_view(argv[1]) == "--serialized-audit") {
+            std::cout << AnyBox::Shader::Tools::AuditSerializedCompute(AnyBox::Shader::Tools::ReadInput(argv[2]));
+            if (!std::cout) throw std::runtime_error("Cannot write serialized pipeline audit results");
+            return 0;
+        }
         if (argc == 4 && std::string_view(argv[1]) == "--serialized-code") {
             auto wave = std::string_view(argv[3]);
             if (wave != "32" && wave != "64") throw std::invalid_argument("Serialized shader wave size must be 32 or 64");

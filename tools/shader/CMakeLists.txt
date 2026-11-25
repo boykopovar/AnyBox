@@ -18,6 +18,13 @@ set_target_properties(anybox_shader PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ANYBO
 anybox_add_compiler_runtime(anybox_shader)
 
 if(BUILD_TESTING)
+    add_executable(shader_serialized_tool_tests tests/Serialized.cpp Serialized.cpp)
+    target_link_libraries(shader_serialized_tool_tests PRIVATE anybox_native_shader anybox_shader_artifact anybox_test_support)
+    target_compile_definitions(shader_serialized_tool_tests PRIVATE ANYBOX_LIBRARY_NAME="shader_serialized_tool")
+    set_target_properties(shader_serialized_tool_tests PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ANYBOX_RUNTIME_DIRECTORY}")
+    anybox_add_compiler_runtime(shader_serialized_tool_tests)
+    add_test(NAME shader.serialized_tool COMMAND shader_serialized_tool_tests)
+    set_tests_properties(shader.serialized_tool PROPERTIES TIMEOUT 15)
     add_executable(shader_graphics_tool_tests tests/Graphics.cpp tests/Options.cpp graphics/Options.cpp graphics/Prepare.cpp Files.cpp)
     target_sources(shader_graphics_tool_tests PRIVATE "${PROJECT_SOURCE_DIR}/core/graphics/container/tests/NativeFixtures.cpp")
     target_include_directories(shader_graphics_tool_tests PRIVATE "${PROJECT_SOURCE_DIR}/core/graphics/container/tests")
