@@ -50,7 +50,7 @@ int AnyBox::Shader::Tools::AuditStream() {
             }
             result = "failed\t" + diagnostic;
         }
-        std::cout << "record\t" << count++ << '\t' << kind << '\t' << result << '\n';
+        std::cout << "record\t" << count++ << '\t' << kind << '\t' << result << '\n' << std::flush;
         if (!std::cout) throw std::runtime_error("Cannot write shader audit result");
     }
     if (std::cin.bad() || std::cin.gcount() != 0) throw std::runtime_error("Shader audit stream header is truncated");
