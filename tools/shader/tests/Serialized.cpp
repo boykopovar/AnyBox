@@ -1,4 +1,5 @@
 #include "../Serialized.hpp"
+#include "SerializedReference.hpp"
 #include <anybox/graphics/container/Fspx.hpp>
 #include <anybox/ExceptionTest.hpp>
 #include <array>
@@ -55,8 +56,31 @@ void CheckTool(std::uint32_t wave) {
     auto invalid = BuildFspx(parts);
     Reject([&] { (void)AuditSerializedCompute(invalid); });
 }
+
+void CheckReference() {
+    SerializedTests::ReferenceFixture fixture;
+    auto payload = fixture.Payload();
+    auto reference = fixture.Source();
+    auto audit = AuditSerializedCompute(payload, reference, fixture.root);
+    Require(audit.starts_with("words=") && audit.find("images=0") != std::string::npos);
+    auto identity = fixture;
+    identity.hash[4] ^= std::byte{1};
+    Reject([&] { (void)AuditSerializedCompute(payload, identity.Source(), fixture.root); });
+    identity = fixture;
+    identity.hash[0] = std::byte{1};
+    Reject([&] { (void)AuditSerializedCompute(payload, identity.Source(), fixture.root); });
+    auto threads = fixture;
+    Set(threads.program, 0x13C, 1);
+    Reject([&] { (void)AuditSerializedCompute(payload, threads.Source(), fixture.root); });
+    Reject([&] { (void)AuditSerializedCompute(payload, reference, BuildDxbc({})); });
+    auto resources = fixture;
+    resources.program.resize(0x1A4);
+    Set(resources.program, 0xF0, 0x180);
+    Set(resources.program, 0xFC, 1);
+    Reject([&] { (void)AuditSerializedCompute(payload, resources.Source(), fixture.root); });
+}
 }
 
 int main() {
-    return AnyBox::Tests::Run([] { CheckTool(32); CheckTool(64); });
+    return AnyBox::Tests::Run([] { CheckTool(32); CheckTool(64); CheckReference(); });
 }

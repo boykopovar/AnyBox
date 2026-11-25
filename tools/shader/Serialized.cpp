@@ -2,10 +2,15 @@
 #include "AuditTarget.hpp"
 #include <anybox/graphics/container/Fspx.hpp>
 #include <anybox/graphics/container/FspxDispatch.hpp>
+#include <anybox/graphics/container/FspxMetadata.hpp>
+#include <anybox/graphics/container/Native.hpp>
 #include <anybox/shader/Artifact.hpp>
 #include <anybox/shader/Native.hpp>
 #include <anybox/shader/NativeCompute.hpp>
+#include <anybox/shader/NativeArguments.hpp>
+#include <anybox/shader/NativeRootArgumentWriter.hpp>
 #include <RdnaDecoder/RdnaInstructionDecoder.hpp>
+#include <algorithm>
 #include <sstream>
 
 namespace {
@@ -18,6 +23,17 @@ std::span<const std::byte> ReadPayload(std::span<const std::byte> data) {
         data = part->data;
     }
     return data;
+}
+
+std::string Describe(const AnyBox::Shader::ComputeCompilation& compiled) {
+    const auto& layout = compiled.bindings.layout;
+    std::ostringstream output;
+    output << "words=" << compiled.code.size() << " images=" << layout.runtimeImageCount << " push_bytes=" << compiled.bindings.pushConstantSizeBytes << " user_registers=";
+    for (auto index : layout.userDataRegisters) output << index << ',';
+    output << "\ndescriptors=";
+    for (const auto& descriptor : layout.descriptors) output << static_cast<std::uint32_t>(descriptor.kind) << ':' << descriptor.resources.size() << ',';
+    output << '\n';
+    return output.str();
 }
 }
 
@@ -48,12 +64,28 @@ std::string AnyBox::Shader::Tools::AuditSerializedCompute(std::span<const std::b
     auto state = Graphics::Container::ReadSerializedComputeState(view.GetDispatchState());
     NativeFrontend frontend(view.GetCode(), state.waveSize);
     auto compiled = CompileNativeCompute(frontend, state.shader, AuditTarget(), {0, 0, 0, 128});
-    const auto& layout = compiled.bindings.layout;
-    std::ostringstream output;
-    output << "words=" << compiled.code.size() << " images=" << layout.runtimeImageCount << " push_bytes=" << compiled.bindings.pushConstantSizeBytes << " user_registers=";
-    for (auto index : layout.userDataRegisters) output << index << ',';
-    output << "\ndescriptors=";
-    for (const auto& descriptor : layout.descriptors) output << static_cast<std::uint32_t>(descriptor.kind) << ':' << descriptor.resources.size() << ',';
-    output << '\n';
-    return output.str();
+    return Describe(compiled);
+}
+
+std::string AnyBox::Shader::Tools::AuditSerializedCompute(std::span<const std::byte> data, std::span<const std::byte> reference, std::span<const std::byte> root) {
+    using namespace Graphics::Container;
+    FspxView view(ReadPayload(data));
+    auto metadata = ReadSerializedComputeMetadata(view);
+    DxbcView source(reference);
+    auto identity = source.FindPart(0x48534148);
+    if (!identity || identity->data.size() != 20 || !std::ranges::all_of(identity->data.first(4), [](auto value) { return value == std::byte{}; }) || !std::ranges::equal(identity->data.subspan(4), metadata.shaderHash)) throw std::invalid_argument("Serialized shader and native reference identities disagree");
+    auto programs = UnpackNativePrograms(reference);
+    if (programs.size() != 1) throw std::runtime_error("Serialized compute reference requires one native hardware program");
+    auto bindings = ReadNativeComputeBindings(programs.front());
+    if (bindings.resources != metadata.resources) throw std::runtime_error("Serialized shader and native reference resource bindings disagree");
+    auto state = ReadSerializedComputeState(view.GetDispatchState());
+    if (ReadNativeComputeState(programs.front()).threads != state.shader.threads) throw std::invalid_argument("Serialized shader and native reference workgroup dimensions disagree");
+    auto layout = ReadRootSignatureLayout(root);
+    NativeFrontend frontend(view.GetCode(), state.waveSize);
+    auto target = AuditTarget();
+    auto translated = LowerNativeCompute(frontend, state.shader, ShaderRecompiler::ShaderFloatMode{state.shader.floatControl, state.shader.dx10Clamp, state.shader.ieeeMode, false}, target);
+    BindNativeRawRootArguments(translated, bindings.roots, layout);
+    auto compiled = CompileCompute(translated.program, translated.input, target, {0, 0, 0, 128});
+    (void)NativeRootArgumentWriter(layout, bindings.roots, compiled.bindings.layout.userDataRegisters);
+    return Describe(compiled);
 }
