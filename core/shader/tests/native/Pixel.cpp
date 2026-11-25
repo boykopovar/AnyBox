@@ -81,7 +81,8 @@ void CheckNativePixel() {
         Require(lowered.Resources().stage == IrShaderStage::Pixel && lowered.WaveSize() == target.subgroupSize);
         auto incompatible = target;
         incompatible.subgroupSize = wide ? 32 : 64;
-        Reject<std::runtime_error>([&] { CompilePixel(lowered, input, incompatible, {0, 0, 0, 128}); });
+        auto adjusted = CompilePixel(lowered, input, incompatible, {0, 0, 0, 128});
+        CheckSpirvValidation(adjusted.code);
         state.stage = AnyBox::Graphics::Container::NativeHardwareStage::Compute;
         Reject<std::invalid_argument>([&] { LowerNativePixel(frontend, state, input, 0, target); });
         state = AnyBox::Graphics::Container::ReadNativeStageState(data);

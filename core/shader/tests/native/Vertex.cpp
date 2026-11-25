@@ -4,6 +4,7 @@
 #include <array>
 
 void CheckSpirvValidation(std::span<const std::uint32_t> code);
+void CheckGraphicsWaveProof(std::span<const std::uint32_t> code, std::uint32_t waveSize, const ShaderRecompiler::SpirvTargetOptions& target);
 
 namespace {
 std::vector<std::byte> VertexProgram(bool wide) {
@@ -66,9 +67,13 @@ void CheckNativeVertex() {
         Require(scalarBuffer);
         auto bufferCompiled = CompileVertex(bufferProgram, input, target, {0, 0, 0, 128});
         CheckSpirvValidation(bufferCompiled.code);
+        CheckGraphicsWaveProof(bufferCompiled.code, wide ? 64u : 32u, target);
         auto incompatible = target;
         incompatible.subgroupSize = wide ? 32 : 64;
-        Reject<std::runtime_error>([&] { CompileVertex(lowered, input, incompatible, {0, 0, 0, 128}); });
+        auto adjustedInput = input;
+        adjustedInput.hostSubgroupSize = incompatible.subgroupSize;
+        auto adjusted = CompileVertex(lowered, adjustedInput, incompatible, {0, 0, 0, 128});
+        CheckSpirvValidation(adjusted.code);
         input.hostSubgroupSize = incompatible.subgroupSize;
         Reject<std::invalid_argument>([&] { LowerNativeVertex(frontend, state, input, 0, target); });
         input.hostSubgroupSize = target.subgroupSize;
