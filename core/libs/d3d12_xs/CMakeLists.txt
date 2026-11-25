@@ -55,7 +55,7 @@ target_sources(d3d12_xs PRIVATE src/queue/GpuExecution.cpp src/list/Dispatch.cpp
 target_sources(d3d12_xs PRIVATE src/device/Gpu.cpp src/device/PagePools.cpp src/pagepool/Registry.cpp)
 target_sources(d3d12_xs PRIVATE src/device/Allocation.cpp src/resource/TextureAllocation.cpp)
 target_sources(d3d12_xs PRIVATE src/device/Committed.cpp src/resource/TextureCreation.cpp src/resource/TextureProperties.cpp src/resource/TextureFormat.cpp)
-target_link_libraries(d3d12_xs PRIVATE anybox_address)
+target_link_libraries(d3d12_xs PRIVATE anybox_address anybox_texture_layout)
 target_link_libraries(d3d12_xs PUBLIC anybox_texture)
 target_link_libraries(d3d12_xs PUBLIC anybox_buffer_addresses)
 target_sources(d3d12_xs PRIVATE src/descriptor/TextureViews.cpp)
