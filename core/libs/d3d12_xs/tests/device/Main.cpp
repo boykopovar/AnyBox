@@ -74,6 +74,7 @@ int main(int argc, char** argv) {
             CheckComputeInline(device);
             CheckPipelines(device);
             CheckSerializedPipeline(device);
+            CheckSerializedGraphicsState(device);
             CheckPreparedPipeline(device);
             CheckPreparedGraphics(device);
             CheckGraphicsCache();
