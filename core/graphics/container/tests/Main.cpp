@@ -16,6 +16,7 @@ void CheckRootSignatureLayout();
 void CheckEmbeddedDxbc();
 void CheckFspx();
 void CheckFspxDispatch();
+void CheckFspxMetadata();
 
 namespace {
 using namespace AnyBox::Graphics::Container;
@@ -94,5 +95,6 @@ int main() {
         CheckEmbeddedDxbc();
         CheckFspx();
         CheckFspxDispatch();
+        CheckFspxMetadata();
     });
 }

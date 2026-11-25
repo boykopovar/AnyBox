@@ -27,6 +27,7 @@ struct NativeResourceBinding {
     std::uint8_t descriptorWords;
     std::uint8_t firstUserRegister;
     std::uint8_t rootParameter;
+    bool operator==(const NativeResourceBinding&) const = default;
 };
 
 struct NativeBindings {
@@ -36,4 +37,5 @@ struct NativeBindings {
 
 NativeBindings ReadNativeComputeBindings(std::span<const std::byte> program);
 NativeBindings ReadNativeBindings(std::span<const std::byte> program);
+NativeResourceBinding ReadNativeResourceBinding(std::span<const std::byte> data);
 }

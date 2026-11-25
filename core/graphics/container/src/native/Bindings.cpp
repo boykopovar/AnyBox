@@ -58,9 +58,7 @@ AnyBox::Graphics::Container::NativeBindings AnyBox::Graphics::Container::ReadNat
     }
     for (std::size_t offset = 0; offset < resources.size(); offset += 20) {
         auto entry = resources.subspan(offset, 20);
-        if (Byte(entry, 0) > 3) throw std::runtime_error("Xbox native resource binding kind is not implemented");
-        if (Byte(entry, 2) != 0 || Byte(entry, 3) != 0 || Byte(entry, 19) != 0) throw std::runtime_error("Xbox native resource binding flags are not implemented");
-        result.resources.push_back({static_cast<NativeResourceKind>(Byte(entry, 0)), RootKind(Byte(entry, 1)), ReadInteger(entry, 4), ReadInteger(entry, 8), ReadInteger(entry, 12), Byte(entry, 16), Byte(entry, 17), Byte(entry, 18)});
+        result.resources.push_back(ReadNativeResourceBinding(entry));
     }
     return result;
 }
