@@ -16,6 +16,13 @@
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 5 && std::string_view(argv[1]) == "--serialized-stage-code") {
+            auto wave = std::string_view(argv[4]);
+            if (wave != "32" && wave != "64") throw std::invalid_argument("Serialized stage wave size must be 32 or 64");
+            std::cout << AnyBox::Shader::Tools::InspectSerializedStageInstructions(AnyBox::Shader::Tools::ReadInput(argv[2]), AnyBox::Shader::Tools::ReadInput(argv[3]), wave == "32" ? 32u : 64u);
+            if (!std::cout) throw std::runtime_error("Cannot write serialized stage instructions");
+            return 0;
+        }
         if (argc == 4 && std::string_view(argv[1]) == "--serialized-stage-info") {
             auto metadata = AnyBox::Graphics::Container::ReadSerializedStageMetadata(AnyBox::Shader::Tools::ReadInput(argv[2]), AnyBox::Shader::Tools::ReadInput(argv[3]));
             std::cout << "code_words=" << metadata.codeWords << " control=" << metadata.control << " resources=" << metadata.resources.size() << " declarations=" << metadata.declarations.size() << '\n';

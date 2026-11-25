@@ -5,6 +5,8 @@
 #include <array>
 #include <stdexcept>
 
+void CheckSerializedStageTool();
+
 namespace {
 using namespace AnyBox::Graphics::Container;
 using namespace AnyBox::Shader::Tools;
@@ -82,5 +84,5 @@ void CheckReference() {
 }
 
 int main() {
-    return AnyBox::Tests::Run([] { CheckTool(32); CheckTool(64); CheckReference(); });
+    return AnyBox::Tests::Run([] { CheckTool(32); CheckTool(64); CheckReference(); CheckSerializedStageTool(); });
 }
