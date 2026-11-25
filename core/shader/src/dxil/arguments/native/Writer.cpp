@@ -6,7 +6,7 @@
 
 AnyBox::Shader::NativeRootArgumentWriter::NativeRootArgumentWriter(const Graphics::Container::RootSignatureLayout& layout, std::span<const Graphics::Container::NativeRootBinding> roots, std::span<const std::uint32_t> registers) {
     using namespace Graphics::Container;
-    if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native compute root signature version or flags are invalid");
+    ValidateNativeComputeRootLayout(layout);
     if (registers.size() > 128) throw std::length_error("Native root register selection exceeds the artifact ABI capacity");
     for (const auto& binding : roots) ValidateNativeRootBinding(layout, binding);
     std::array<bool, 128> selected{};

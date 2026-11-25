@@ -1,7 +1,11 @@
 #include "Binding.hpp"
 #include <stdexcept>
 
-void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding) {
+void AnyBox::Shader::ValidateNativeComputeRootLayout(const Graphics::Container::RootSignatureLayout& layout) {
+    if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native compute root signature version or flags are invalid");
+}
+
+void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind) {
     using namespace Graphics::Container;
     if (binding.registerCount == 0) {
         if (binding.kind != NativeRootKind::ImmediateSampler) throw std::invalid_argument("Native root binding register range is empty");
@@ -21,6 +25,7 @@ void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSi
             auto limit = range.count == UINT32_MAX ? static_cast<std::uint64_t>(UINT32_MAX) + 1 : static_cast<std::uint64_t>(range.firstRegister) + range.count;
             cursor = range.count == UINT32_MAX ? static_cast<std::uint64_t>(UINT32_MAX) + 1 : offset + range.count;
             if (offset > UINT32_MAX || cursor > static_cast<std::uint64_t>(UINT32_MAX) + 1 || limit > static_cast<std::uint64_t>(UINT32_MAX) + 1) throw std::invalid_argument("Native descriptor table range overflows");
+            if (rangeKind && range.kind != *rangeKind) continue;
             if (binding.shaderRegister < range.firstRegister || binding.shaderRegister >= limit) continue;
             auto stride = range.kind == RootRangeKind::Sampler ? 4u : 8u;
             found |= (offset + binding.shaderRegister - range.firstRegister) * stride == binding.tableOffset;

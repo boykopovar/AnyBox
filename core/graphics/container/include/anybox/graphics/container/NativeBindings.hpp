@@ -16,6 +16,7 @@ struct NativeRootBinding {
     std::uint32_t shaderRegister;
     std::uint8_t firstUserRegister;
     std::uint8_t rootParameter;
+    bool operator==(const NativeRootBinding&) const = default;
 };
 
 struct NativeResourceBinding {

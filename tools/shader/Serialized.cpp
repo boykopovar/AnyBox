@@ -9,6 +9,7 @@
 #include <anybox/shader/NativeCompute.hpp>
 #include <anybox/shader/NativeArguments.hpp>
 #include <anybox/shader/NativeRootArgumentWriter.hpp>
+#include <anybox/shader/SerializedRootArguments.hpp>
 #include <RdnaDecoder/RdnaInstructionDecoder.hpp>
 #include <algorithm>
 #include <sstream>
@@ -81,11 +82,15 @@ std::string AnyBox::Shader::Tools::AuditSerializedCompute(std::span<const std::b
     auto state = ReadSerializedComputeState(view.GetDispatchState());
     if (ReadNativeComputeState(programs.front()).threads != state.shader.threads) throw std::invalid_argument("Serialized shader and native reference workgroup dimensions disagree");
     auto layout = ReadRootSignatureLayout(root);
+    auto roots = BuildSerializedComputeRoots(metadata.resources, layout);
+    for (const auto& binding : roots) {
+        if (std::ranges::find(bindings.roots, binding) == bindings.roots.end()) throw std::invalid_argument("Serialized native root mapping disagrees with its reference");
+    }
     NativeFrontend frontend(view.GetCode(), state.waveSize);
     auto target = AuditTarget();
     auto translated = LowerNativeCompute(frontend, state.shader, ShaderRecompiler::ShaderFloatMode{state.shader.floatControl, state.shader.dx10Clamp, state.shader.ieeeMode, false}, target);
-    BindNativeRawRootArguments(translated, bindings.roots, layout);
+    BindNativeRawRootArguments(translated, roots, layout);
     auto compiled = CompileCompute(translated.program, translated.input, target, {0, 0, 0, 128});
-    (void)NativeRootArgumentWriter(layout, bindings.roots, compiled.bindings.layout.userDataRegisters);
+    (void)NativeRootArgumentWriter(layout, roots, compiled.bindings.layout.userDataRegisters);
     return Describe(compiled);
 }
