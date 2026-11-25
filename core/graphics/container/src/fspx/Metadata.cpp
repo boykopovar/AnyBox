@@ -4,10 +4,14 @@
 #include <algorithm>
 
 AnyBox::Graphics::Container::SerializedComputeMetadata AnyBox::Graphics::Container::ReadSerializedComputeMetadata(const FspxView& program) {
-    auto data = program.GetRecords();
+    return ReadSerializedComputeMetadata(program.GetCode(), program.GetRecords());
+}
+
+AnyBox::Graphics::Container::SerializedComputeMetadata AnyBox::Graphics::Container::ReadSerializedComputeMetadata(std::span<const std::byte> code, std::span<const std::byte> data) {
+    if (code.empty() || code.size() % 4 != 0 || code.size() > UINT32_MAX) throw std::invalid_argument("Xbox serialized compute code size is invalid");
     if (data.size() < 56 || (data.size() - 24) % 32 != 0) throw std::invalid_argument("Xbox serialized compute metadata size is invalid");
     if (ReadInteger(data, 0) != 0x403) throw std::runtime_error("Xbox serialized compute metadata version is not implemented");
-    if (ReadInteger(data, 4) != data.size() - 20 || ReadInteger(data, 8) != program.GetCode().size() / 4) throw std::invalid_argument("Xbox serialized compute metadata sizes disagree with their payloads");
+    if (ReadInteger(data, 4) != data.size() - 20 || ReadInteger(data, 8) != code.size() / 4) throw std::invalid_argument("Xbox serialized compute metadata sizes disagree with their payloads");
     if (ReadInteger(data, 12) != 0 || ReadInteger(data, 16) != 0 || (ReadInteger(data, 20) & 65535) != 0x440) throw std::runtime_error("Xbox serialized compute metadata control mode is not implemented");
     SerializedComputeMetadata output{};
     bool declarations = false;
@@ -30,6 +34,6 @@ AnyBox::Graphics::Container::SerializedComputeMetadata AnyBox::Graphics::Contain
         }
     }
     if (!hash || output.resources.size() != ReadInteger(data, 20) >> 16) throw std::invalid_argument("Xbox serialized compute resource count or hash record is invalid");
-    if (output.shaderHash != ReadSerializedCodeHash(program.GetCode())) throw std::invalid_argument("Xbox serialized compute code and metadata shader hashes disagree");
+    if (output.shaderHash != ReadSerializedCodeHash(code)) throw std::invalid_argument("Xbox serialized compute code and metadata shader hashes disagree");
     return output;
 }

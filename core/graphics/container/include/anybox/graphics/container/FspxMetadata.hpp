@@ -10,4 +10,5 @@ struct SerializedComputeMetadata {
 };
 
 SerializedComputeMetadata ReadSerializedComputeMetadata(const FspxView& program);
+SerializedComputeMetadata ReadSerializedComputeMetadata(std::span<const std::byte> code, std::span<const std::byte> records);
 }

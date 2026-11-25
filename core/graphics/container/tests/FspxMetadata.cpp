@@ -49,15 +49,21 @@ void CheckFspxMetadata() {
     Require(metadata.shaderHash == fixture.hash && metadata.resources.size() == 1);
     NativeResourceBinding expected{NativeResourceKind::ShaderResource, NativeRootKind::Table, 0, 3, 4, 8, 4, 0};
     Require(metadata.resources.front() == expected);
+    auto separate = ReadSerializedComputeMetadata(fixture.code, fixture.records);
+    Require(separate.shaderHash == metadata.shaderHash && separate.resources == metadata.resources);
+    Reject<std::invalid_argument>([&] { (void)ReadSerializedComputeMetadata({}, fixture.records); });
+    Reject<std::invalid_argument>([&] { (void)ReadSerializedComputeMetadata(std::span(fixture.code).first(39), fixture.records); });
     for (std::size_t size = 0; size < fixture.records.size(); ++size) {
         auto truncated = fixture.Payload(std::span(fixture.records).first(size));
         Reject<std::exception>([&] { (void)ReadSerializedComputeMetadata(FspxView(truncated)); });
+        Reject<std::exception>([&] { (void)ReadSerializedComputeMetadata(fixture.code, std::span(fixture.records).first(size)); });
     }
     for (const auto& [offset, value] : std::array<std::pair<std::size_t, std::uint32_t>, 17>{{{0, 0}, {4, 0}, {8, 1}, {12, 1}, {16, 1}, {20, 0x18440}, {20, 0x20440}, {24, 0x44}, {28, 0x30200}, {48, 0}, {52, 1}, {56, 0x41}, {80, 0}, {88, 0x42}, {108, 1}, {92, 0}, {84, 1}}}) {
         auto invalid = fixture.records;
         Set(invalid, offset, value);
         auto payload = fixture.Payload(invalid);
         Reject<std::exception>([&] { (void)ReadSerializedComputeMetadata(FspxView(payload)); });
+        Reject<std::exception>([&] { (void)ReadSerializedComputeMetadata(fixture.code, invalid); });
     }
     for (auto offset : {0u, 4u, 8u, 12u, 16u, 20u, 24u, 28u}) {
         auto invalid = fixture;
