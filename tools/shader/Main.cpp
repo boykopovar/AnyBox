@@ -16,6 +16,13 @@
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 6 && std::string_view(argv[1]) == "--serialized-stage-roots") {
+            auto stage = std::string_view(argv[5]);
+            if (stage != "vertex" && stage != "pixel") throw std::invalid_argument("Serialized graphics stage must be vertex or pixel");
+            std::cout << AnyBox::Shader::Tools::InspectSerializedStageRoots(AnyBox::Shader::Tools::ReadInput(argv[2]), AnyBox::Shader::Tools::ReadInput(argv[3]), AnyBox::Shader::Tools::ReadInput(argv[4]), stage == "vertex" ? 1u : 5u);
+            if (!std::cout) throw std::runtime_error("Cannot write serialized graphics root bindings");
+            return 0;
+        }
         if (argc == 5 && std::string_view(argv[1]) == "--serialized-stage-code") {
             auto wave = std::string_view(argv[4]);
             if (wave != "32" && wave != "64") throw std::invalid_argument("Serialized stage wave size must be 32 or 64");

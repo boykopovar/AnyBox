@@ -1,4 +1,5 @@
 #include "../Serialized.hpp"
+#include <anybox/graphics/container/View.hpp>
 #include <array>
 #include <stdexcept>
 
@@ -31,6 +32,14 @@ void CheckSerializedStageTool() {
         if (!caught) throw std::runtime_error("Serialized stage tool accepted invalid input");
     };
     reject([&] { (void)InspectSerializedStageInstructions(code, metadata, 16); });
+    std::array<std::uint32_t, 6> rootWords{2, 0, 24, 0, 24, 0};
+    auto root = AnyBox::Graphics::Container::BuildDxbc(std::array<AnyBox::Graphics::Container::Part, 1>{{{0x30535452, std::as_bytes(std::span(rootWords))}}});
+    for (auto visibility : {1u, 5u}) {
+        auto output = InspectSerializedStageRoots(code, metadata, root, visibility);
+        if (output.find("roots=0 user_registers=0") == std::string::npos) throw std::runtime_error("Serialized stage root audit test failed");
+    }
+    reject([&] { (void)InspectSerializedStageRoots(code, metadata, root, 6); });
+    reject([&] { (void)InspectSerializedStageRoots(code, metadata, {}, 1); });
     set(code, 36, 0xFFFFFFFF);
     reject([&] { (void)InspectSerializedStageInstructions(code, metadata, 64); });
 }
