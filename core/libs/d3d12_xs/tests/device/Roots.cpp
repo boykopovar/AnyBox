@@ -23,6 +23,8 @@ void AnyBox::Graphics::Tests::CheckRoots(Device* device) {
         void* output = nullptr;
         Require(create(device, 0, data->GetBufferPointer(), data->GetBufferSize(), RootSignatureId, &output) == 0 && output, "Root signature device creation failed");
         auto* signature = static_cast<RootSignature*>(output);
+        auto serialized = std::span(static_cast<const std::byte*>(data->GetBufferPointer()), data->GetBufferSize());
+        Require(signature->GetSourceDigest() == Shader::HashSerializedRootSignature(serialized), "Root signature source digest changed during host translation");
         auto query = Method<decltype(&RootSignature::QueryInterface)>(signature, 0);
         auto release = Method<decltype(&RootSignature::Release)>(signature, 2);
         for (const auto& id : {RootSignatureId, UnknownId, ObjectId, DeviceChildId}) {

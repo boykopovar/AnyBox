@@ -4,7 +4,7 @@
 #include "../host/Library.hpp"
 #include <memory>
 
-AnyBox::Graphics::RootDescription::RootDescription(std::span<const std::byte> data) : flags(ReadSerializedRootFlags(data)), layout(Container::ReadRootSignatureLayout(data)) {
+AnyBox::Graphics::RootDescription::RootDescription(std::span<const std::byte> data) : flags(ReadSerializedRootFlags(data)), layout(Container::ReadRootSignatureLayout(data)), sourceDigest(Shader::HashSerializedRootSignature(data)) {
     if ((flags & ~0x83000FFFU) != 0) throw std::invalid_argument("Unsupported Xbox root signature flags");
     if ((flags & D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE) != 0 && flags != D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE) throw std::invalid_argument("A local root signature cannot contain additional root signature flags");
     static auto deserialize = GetHostLibrary().Get<PFN_D3D12_CREATE_VERSIONED_ROOT_SIGNATURE_DESERIALIZER>("D3D12CreateVersionedRootSignatureDeserializer");

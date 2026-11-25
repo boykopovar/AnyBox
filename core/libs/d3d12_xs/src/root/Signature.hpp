@@ -27,6 +27,7 @@ public:
     const D3D12_VERSIONED_ROOT_SIGNATURE_DESC& GetDescription() const noexcept { return layout->GetDescription(); }
     std::uint32_t GetFlags() const noexcept { return layout->GetFlags(); }
     const Container::RootSignatureLayout& GetLayout() const noexcept { return layout->GetLayout(); }
+    const Shader::ShaderDigest& GetSourceDigest() const noexcept { return layout->GetSourceDigest(); }
     Device* GetParent() const noexcept { return device; }
     static bool Supports(const Guid& interfaceId) noexcept { return interfaceId == RootSignatureId || interfaceId == UnknownId || interfaceId == ObjectId || interfaceId == DeviceChildId; }
     static constexpr std::size_t GetVtableOffset() { return offsetof(RootSignature, vtable); }
