@@ -5,6 +5,7 @@
 #include <optional>
 
 void CheckGraphicsCache();
+void CheckExtendedTextureShaderViews(AnyBox::Graphics::Device* device);
 void CheckGraphicsPipelineStream();
 void CheckPreparedGraphics(AnyBox::Graphics::Device* device);
 
@@ -88,6 +89,7 @@ int main(int argc, char** argv) {
             CheckNullUnorderedViews(device);
             CheckConstantViews(device);
             CheckRawShaderViews(device);
+            CheckExtendedTextureShaderViews(device);
         CheckTypedShaderViews(device);
             CheckVulkanTimeline(device);
             CheckGpuQueue(device);

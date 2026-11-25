@@ -1,6 +1,7 @@
 #include "Descriptions.hpp"
 #include "RawBuffer.hpp"
 #include "TypedBuffer.hpp"
+#include "ExtendedTextureView.hpp"
 #include "../device/Device.hpp"
 #include <anybox/Unimplemented.hpp>
 #include <algorithm>
@@ -12,7 +13,12 @@ void AnyBox::Graphics::Device::CreateShaderResourceViewX(Device*, const D3D12_RE
         std::memset(output, 0, 32);
         return;
     }
-    if (!description || resource->Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) ANYBOX_NOT_IMPLEMENTED();
+    if (!description) ANYBOX_NOT_IMPLEMENTED();
+    if (resource->Dimension != D3D12_RESOURCE_DIMENSION_BUFFER) {
+        auto words = EncodeTextureShaderViewX(*resource, *description);
+        std::memcpy(output, words.data(), sizeof(words));
+        return;
+    }
     const auto& view = description->view;
     if (view.ViewDimension != D3D12_SRV_DIMENSION_BUFFER) ANYBOX_NOT_IMPLEMENTED();
     if ((resource->Flags & D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE) != 0) throw std::invalid_argument("Xbox resource does not allow shader resource views");
