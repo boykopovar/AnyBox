@@ -82,6 +82,8 @@ struct DeviceFunctions {
     PFN_vkCmdCopyImageToBuffer copyImageToBuffer;
     PFN_vkCreateImageView createImageView;
     PFN_vkDestroyImageView destroyImageView;
+    PFN_vkCreateSampler createSampler;
+    PFN_vkDestroySampler destroySampler;
     PFN_vkCreateDescriptorSetLayout createDescriptorSetLayout;
     PFN_vkDestroyDescriptorSetLayout destroyDescriptorSetLayout;
     PFN_vkCreateDescriptorPool createDescriptorPool;
