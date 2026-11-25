@@ -15,10 +15,11 @@
 
 int main(int argc, char** argv) {
     try {
-        if ((argc == 5 || argc == 6) && std::string_view(argv[1]) == "--prepare-serialized-compute") {
+        if ((argc == 5 || argc == 6) && (std::string_view(argv[1]) == "--prepare-serialized-compute" || std::string_view(argv[1]) == "--check-serialized-compute")) {
             auto subgroup = argc == 6 ? std::string_view(argv[5]) : "32";
             if (subgroup != "32" && subgroup != "64") throw std::invalid_argument("Serialized compute subgroup size must be 32 or 64");
-            AnyBox::Shader::Tools::PrepareSerializedCompute(argv[2], argv[3], argv[4], subgroup == "32" ? 32u : 64u);
+            if (std::string_view(argv[1]) == "--check-serialized-compute") AnyBox::Shader::Tools::CheckSerializedComputeGpu(argv[2], argv[3], argv[4], subgroup == "32" ? 32u : 64u);
+            else AnyBox::Shader::Tools::PrepareSerializedCompute(argv[2], argv[3], argv[4], subgroup == "32" ? 32u : 64u);
             return 0;
         }
         if (argc == 5 && std::string_view(argv[1]) == "--serialized-audit") {

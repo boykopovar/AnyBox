@@ -4,6 +4,7 @@ target_sources(anybox_shader PRIVATE NativeAudit.cpp NativeCode.cpp)
 
 target_sources(anybox_shader PRIVATE Serialized.cpp)
 target_sources(anybox_shader PRIVATE serialized/Compile.cpp serialized/Prepare.cpp)
+target_sources(anybox_shader PRIVATE serialized/Gpu.cpp)
 target_link_libraries(anybox_shader PRIVATE anybox_shader_plan)
 target_sources(anybox_shader PRIVATE Compile.cpp Artifact.cpp)
 target_sources(anybox_shader PRIVATE CompileNative.cpp)
