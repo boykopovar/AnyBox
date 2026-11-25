@@ -11,6 +11,7 @@ int main() {
         AnyBox::Relinker::Tests::CheckInsert();
         AnyBox::Relinker::Tests::CheckPatching();
         AnyBox::Relinker::Tests::CheckExtract();
+        AnyBox::Relinker::Tests::CheckMonitor();
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

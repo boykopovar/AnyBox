@@ -21,6 +21,7 @@ public:
     Decoder();
     DecodedInstruction Decode(std::span<const std::byte> code) const;
     std::optional<EncodedInstruction> LowerWriteback(const DecodedInstruction& instruction, std::span<const std::byte> code) const;
+    std::optional<EncodedInstruction> LowerMonitor(const DecodedInstruction& instruction) const;
 
 private:
     ZydisDecoder decoder{};

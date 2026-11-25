@@ -46,6 +46,15 @@ AnyBox::Relinker::RelinkResult AnyBox::Relinker::Relink(Image& image, const Cpu&
                     cpu.Require(decoder.Decode(bytes), address);
                     std::ranges::copy(bytes, image.GetBytes().begin() + static_cast<std::ptrdiff_t>(offset));
                     result.writebackAddresses.push_back(address);
+                } else if (auto monitor = decoder.LowerMonitor(instruction)) {
+                    auto bytes = std::span(monitor->bytes).first(monitor->length);
+                    for (std::size_t position = 0; position < bytes.size();) {
+                        auto emitted = decoder.Decode(bytes.subspan(position));
+                        cpu.Require(emitted, address);
+                        position += emitted.native.length;
+                    }
+                    std::ranges::copy(bytes, image.GetBytes().begin() + static_cast<std::ptrdiff_t>(offset));
+                    result.monitorAddresses.push_back(address);
                 } else if (instruction.native.mnemonic == ZYDIS_MNEMONIC_INSERTQ) {
                     auto allocation = image.GetStackAllocation(address);
                     if (allocation % 8 != 0) throw std::runtime_error("PE lowering call site has an unsupported stack alignment");
@@ -86,6 +95,6 @@ AnyBox::Relinker::RelinkResult AnyBox::Relinker::Relink(Image& image, const Cpu&
         }
     }
     image.AppendLowerings(lowerings);
-    if (!result.writebackAddresses.empty()) image.Finalize();
+    if (!result.writebackAddresses.empty() || !result.monitorAddresses.empty()) image.Finalize();
     return result;
 }
