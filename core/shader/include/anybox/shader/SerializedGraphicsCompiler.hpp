@@ -11,7 +11,7 @@ struct SerializedGraphicsStageSource {
     std::span<const std::byte> state;
     std::span<const std::byte> code;
     std::span<const std::byte> metadata;
-    std::uint32_t waveSize;
+    std::uint32_t waveSize = 0;
 };
 
 struct SerializedGraphicsStageCompilation {

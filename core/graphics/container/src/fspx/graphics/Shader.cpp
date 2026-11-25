@@ -16,5 +16,8 @@ AnyBox::Graphics::Container::SerializedGraphicsShaderState AnyBox::Graphics::Con
     auto userRegisters = ((control >> 1) & 31) | ((control >> 22) & 32);
     if (userRegisters > 32) throw std::invalid_argument("Xbox serialized graphics user register count exceeds its hardware limit");
     NativeStageState shader{stage, (resources >> 12) & 255, (resources & 0x200000) != 0, (resources & 0x800000) != 0};
-    return {shader, userRegisters};
+    auto hashes = SerializedGraphics::ReadHashes(state);
+    if (hashes.size() < 4) throw std::invalid_argument("Xbox serialized graphics shader mode metadata is missing");
+    auto wave32 = stage == NativeHardwareStage::Vertex ? (ReadInteger(hashes, 0) & 0x800000) != 0 : (ReadInteger(registers, 64) & 0x8000) != 0;
+    return {shader, userRegisters, wave32 ? 32u : 64u};
 }

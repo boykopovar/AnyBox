@@ -31,6 +31,10 @@ struct StageFixture {
         Set(graphics.state, 80, 8);
     }
 
-    AnyBox::Shader::SerializedGraphicsStageSource Source(std::uint32_t wave) const { return {graphics.state, code, metadata, wave}; }
+    AnyBox::Shader::SerializedGraphicsStageSource Source(std::uint32_t wave) {
+        Fixtures::Set(graphics.state, 312, wave == 32 ? 0x800000 : 0);
+        Fixtures::Set(graphics.state, 92, wave == 32 ? 0x8000 : 0);
+        return {graphics.state, code, metadata, wave};
+    }
 };
 }

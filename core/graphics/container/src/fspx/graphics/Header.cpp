@@ -13,3 +13,8 @@ std::span<const std::byte> AnyBox::Graphics::Container::SerializedGraphics::Read
     if (registers < 216 || registers % 4 != 0 || hashes % 4 != 0 || static_cast<std::uint64_t>(28) + registers + hashes != state.size()) throw std::invalid_argument("Xbox serialized graphics register and hash ranges are invalid");
     return state.subspan(28, registers);
 }
+
+std::span<const std::byte> AnyBox::Graphics::Container::SerializedGraphics::ReadHashes(std::span<const std::byte> state) {
+    auto registers = ReadRegisters(state);
+    return state.subspan(28 + registers.size());
+}

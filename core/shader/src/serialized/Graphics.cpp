@@ -11,8 +11,9 @@ AnyBox::Shader::SerializedGraphicsStageCompilation AnyBox::Shader::SerializedGra
 
 AnyBox::Shader::SerializedGraphicsStageCompilation AnyBox::Shader::CompileSerializedVertex(const SerializedGraphicsStageSource& source, const Graphics::Container::RootSignatureLayout& root, const ShaderRecompiler::ShaderVertexInputInfo& input, const ShaderRecompiler::SpirvTargetOptions& target, NativeVertexSystemRegisters system) {
     auto state = Graphics::Container::ReadSerializedGraphicsShaderState(source.state, Graphics::Container::NativeHardwareStage::Vertex);
+    if (source.waveSize != 0 && source.waveSize != state.waveSize) throw std::invalid_argument("Serialized vertex wave size disagrees with its launch state");
     auto metadata = Graphics::Container::ReadSerializedStageMetadata(source.code, source.metadata);
-    NativeFrontend frontend(source.code.first(static_cast<std::size_t>(metadata.codeWords) * 4), source.waveSize);
+    NativeFrontend frontend(source.code.first(static_cast<std::size_t>(metadata.codeWords) * 4), state.waveSize);
     auto program = LowerNativeVertex(frontend, state.shader, input, state.userRegisters, target, system);
     auto compiled = CompileVertex(program, input, target, {0, 0, 0, 128});
     return SerializedGraphics::Finish(program, std::move(compiled), metadata, root, 1);
@@ -20,8 +21,9 @@ AnyBox::Shader::SerializedGraphicsStageCompilation AnyBox::Shader::CompileSerial
 
 AnyBox::Shader::SerializedGraphicsStageCompilation AnyBox::Shader::CompileSerializedPixel(const SerializedGraphicsStageSource& source, const Graphics::Container::RootSignatureLayout& root, const ShaderRecompiler::ShaderPixelInputInfo& input, const ShaderRecompiler::SpirvTargetOptions& target) {
     auto state = Graphics::Container::ReadSerializedGraphicsShaderState(source.state, Graphics::Container::NativeHardwareStage::Pixel);
+    if (source.waveSize != 0 && source.waveSize != state.waveSize) throw std::invalid_argument("Serialized pixel wave size disagrees with its launch state");
     auto metadata = Graphics::Container::ReadSerializedStageMetadata(source.code, source.metadata);
-    NativeFrontend frontend(source.code.first(static_cast<std::size_t>(metadata.codeWords) * 4), source.waveSize);
+    NativeFrontend frontend(source.code.first(static_cast<std::size_t>(metadata.codeWords) * 4), state.waveSize);
     auto program = LowerNativePixel(frontend, state.shader, input, state.userRegisters, target);
     auto compiled = CompilePixel(program, input, target, {0, 0, 0, 128});
     return SerializedGraphics::Finish(program, std::move(compiled), metadata, root, 5);

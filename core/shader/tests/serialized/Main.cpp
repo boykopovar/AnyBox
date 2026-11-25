@@ -35,6 +35,16 @@ void CheckStages() {
             AnyBox::Graphics::Commands::RootState roots(root);
             if (!isPixel) Reject<std::invalid_argument>([&] { (void)arguments.ReadUserData(roots); });
             Require(arguments.ReadUserData(roots, std::array{0u, 0u, 19u})[2] == (isPixel ? 0u : 19u));
+            auto automatic = fixture.Source(wave);
+            automatic.waveSize = 0;
+            auto inferred = isPixel ? CompileSerializedPixel(automatic, root, pixel, target) : CompileSerializedVertex(automatic, root, vertex, target, {2, 3});
+            Require(inferred.shader.code == compiled.shader.code);
+            auto wrong = automatic;
+            wrong.waveSize = wave == 32 ? 64u : 32u;
+            Reject<std::invalid_argument>([&] {
+                if (isPixel) (void)CompileSerializedPixel(wrong, root, pixel, target);
+                else (void)CompileSerializedVertex(wrong, root, vertex, target, {2, 3});
+            });
             auto compile = [&] {
                 if (isPixel) (void)CompileSerializedPixel(fixture.Source(wave), root, pixel, target);
                 else (void)CompileSerializedVertex(fixture.Source(wave), root, vertex, target, {2, 3});

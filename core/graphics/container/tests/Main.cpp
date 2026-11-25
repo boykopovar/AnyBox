@@ -21,6 +21,7 @@ void CheckSerializedStageMetadata();
 void CheckSerializedGraphicsFixedState();
 void CheckSerializedGraphicsBlend();
 void CheckSerializedGraphicsShaderState();
+void CheckSerializedPixelInterface();
 
 namespace {
 using namespace AnyBox::Graphics::Container;
@@ -104,5 +105,6 @@ int main() {
         CheckSerializedGraphicsFixedState();
         CheckSerializedGraphicsBlend();
         CheckSerializedGraphicsShaderState();
+        CheckSerializedPixelInterface();
     });
 }
