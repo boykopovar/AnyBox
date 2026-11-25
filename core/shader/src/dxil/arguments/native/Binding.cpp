@@ -6,8 +6,9 @@ void AnyBox::Shader::ValidateNativeComputeRootLayout(const Graphics::Container::
     if ((layout.version != 1 && layout.version != 2) || (layout.flags & ~0x83000FFFu) != 0 || (layout.flags & 0x80) != 0) throw std::invalid_argument("Native compute root signature version or flags are invalid");
 }
 
-void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind) {
+void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSignatureLayout& layout, const Graphics::Container::NativeRootBinding& binding, std::optional<Graphics::Container::RootRangeKind> rangeKind, NativeRootBindingMode mode) {
     using namespace Graphics::Container;
+    if (mode != NativeRootBindingMode::LogicalRegisters && mode != NativeRootBindingMode::SerializedSlots) throw std::invalid_argument("Native root binding validation mode is invalid");
     if (binding.registerCount == 0) {
         if (binding.kind != NativeRootKind::ImmediateSampler) throw std::invalid_argument("Native root binding register range is empty");
         return;
@@ -26,19 +27,21 @@ void AnyBox::Shader::ValidateNativeRootBinding(const Graphics::Container::RootSi
             auto limit = range.count == UINT32_MAX ? static_cast<std::uint64_t>(UINT32_MAX) + 1 : static_cast<std::uint64_t>(range.firstRegister) + range.count;
             cursor = range.count == UINT32_MAX ? static_cast<std::uint64_t>(UINT32_MAX) + 1 : offset + range.count;
             if (offset > UINT32_MAX || cursor > static_cast<std::uint64_t>(UINT32_MAX) + 1 || limit > static_cast<std::uint64_t>(UINT32_MAX) + 1) throw std::invalid_argument("Native descriptor table range overflows");
+            if (mode == NativeRootBindingMode::SerializedSlots) { found = true; continue; }
             if (rangeKind && range.kind != *rangeKind) continue;
-            if (binding.shaderRegister < range.firstRegister || binding.shaderRegister >= limit) continue;
             auto stride = range.kind == RootRangeKind::Sampler ? 4u : 8u;
-            found |= (offset + binding.shaderRegister - range.firstRegister) * stride == binding.tableOffset;
+            if (binding.shaderRegister >= range.firstRegister && binding.shaderRegister < limit) found |= (offset + binding.shaderRegister - range.firstRegister) * stride == binding.tableOffset;
         }
+        auto alignment = rangeKind && *rangeKind != RootRangeKind::Sampler ? 8u : 4u;
+        if (mode == NativeRootBindingMode::SerializedSlots && binding.tableOffset % alignment != 0) throw std::invalid_argument("Serialized descriptor table slot is misaligned");
         if (!found) {
-            auto detail = "Native descriptor table binding has no matching register and offset: parameter=" + std::to_string(binding.rootParameter) + " register=" + std::to_string(binding.shaderRegister) + " offset=" + std::to_string(binding.tableOffset);
+            auto detail = "Native descriptor table binding has no matching register and offset: parameter=" + std::to_string(binding.rootParameter) + " register=" + std::to_string(binding.shaderRegister) + " offset=" + std::to_string(binding.tableOffset) + " mode=" + std::to_string(static_cast<unsigned>(mode)) + " kind=" + (rangeKind ? std::to_string(static_cast<unsigned>(*rangeKind)) : "any");
             for (const auto& range : parameter.ranges) detail += " range(kind=" + std::to_string(static_cast<unsigned>(range.kind)) + ",register=" + std::to_string(range.firstRegister) + ",count=" + std::to_string(range.count) + ",offset=" + std::to_string(range.tableOffset) + ")";
             throw std::invalid_argument(detail);
         }
         return;
     }
-    if (binding.tableOffset != 0 || binding.shaderRegister != parameter.shaderRegister) throw std::invalid_argument("Native direct root binding register or offset disagrees with its signature");
+    if (binding.tableOffset != 0 || (mode == NativeRootBindingMode::LogicalRegisters && binding.shaderRegister != parameter.shaderRegister)) throw std::invalid_argument("Native direct root binding register or offset disagrees with its signature");
     if (binding.kind == NativeRootKind::Constants) {
         if (parameter.kind != RootParameterKind::Constants || parameter.wordCount == 0 || binding.registerCount != parameter.wordCount) throw std::invalid_argument("Native root constants do not match their declared word count");
     } else if (binding.kind == NativeRootKind::Descriptor) {

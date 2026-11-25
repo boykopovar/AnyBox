@@ -26,7 +26,7 @@ AnyBox::Shader::Tools::PreparedSerializedCompute AnyBox::Shader::Tools::CompileS
     auto plan = ShaderRecompiler::ResourceMaterializer{}.ExtractPlan(translated.program);
 
     auto registers = ReadResourceRegisters(plan, compiled.bindings.layout.userDataRegisters);
-    (void)NativeRootArgumentWriter(layout, roots, registers);
+    (void)NativeRootArgumentWriter(layout, roots, registers, NativeRootBindingMode::SerializedSlots);
     auto artifact = MakeArtifact(std::move(compiled), {}, translated.input, identity);
     ValidateComputeArtifact(artifact);
     return {std::move(artifact), std::move(plan)};

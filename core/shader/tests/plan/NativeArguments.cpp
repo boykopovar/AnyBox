@@ -8,7 +8,7 @@ class Memory {
 public:
     static bool Read(void* context, std::uint64_t address, std::uint32_t* output) {
         auto& memory = *static_cast<Memory*>(context);
-        if (!memory.readable || address != 0x10000 || !output) return false;
+        if (!memory.readable || address != memory.address || !output) return false;
         ++memory.reads;
         *output = memory.value;
         return true;
@@ -16,10 +16,39 @@ public:
     std::uint32_t value = 0x12345678;
     std::uint32_t reads = 0;
     bool readable = true;
+    std::uint64_t address = 0x10000;
 };
+
+void CheckSerializedTableMemory() {
+    using namespace AnyBox::Shader;
+    using namespace AnyBox::Graphics::Container;
+    using namespace ShaderRecompiler;
+    using namespace Fixtures;
+    NativeTests::RootFixture fixture(32, 16);
+    Set(fixture.data, 0x16C, 0xFA000020);
+    auto translation = fixture.Translate();
+    (void)CompileCompute(translation.program, translation.input, BufferTests::Target(), {0, 0, 0, 128});
+    auto plan = ResourceMaterializer{}.ExtractPlan(translation.program);
+    RootSignatureLayout layout{2, 0, 0, {{RootParameterKind::Table, 0, 0, 0, 0, 0, {{RootRangeKind::ConstantBuffer, 1, 0, 0, 0, 0}}}, {RootParameterKind::Constants, 0, 1, 0, 1, 0, {}}}};
+    std::array<NativeRootBinding, 2> roots{{{NativeRootKind::Table, 8, 1, 99, 0, 0}, {NativeRootKind::Constants, 0, 1, 1, 1, 1}}};
+    NativeComputeArguments arguments(plan, layout, roots, {}, NativeRootBindingMode::SerializedSlots);
+    AnyBox::Graphics::Commands::RootState state(layout);
+    state.Write(0, 0, std::array{0x10000u});
+    state.Write(1, 0, std::array{0u});
+    Memory memory;
+    SrtRuntime runtime;
+    runtime.readMemory = &Memory::Read;
+    runtime.userContext = &memory;
+    ResourceSnapshot snapshot;
+    Reject<std::runtime_error>([&] { (void)arguments.Materialize(state, runtime, snapshot); });
+    memory.address = 0x10020;
+    (void)arguments.Materialize(state, runtime, snapshot);
+    Require(memory.reads != 0 && std::ranges::find(snapshot.flattenedSrt, memory.value) != snapshot.flattenedSrt.end());
+}
 }
 
 void CheckNativeComputeArguments() {
+    CheckSerializedTableMemory();
     using namespace AnyBox::Shader;
     using namespace AnyBox::Graphics::Container;
     using namespace ShaderRecompiler;

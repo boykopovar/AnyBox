@@ -22,19 +22,21 @@ void CheckSerializedComputeRoots() {
     std::array<std::uint32_t, 6> output{};
     writer.Write(fixture.State(), output);
     Require(output == std::array{0x12340u, 0x98765432u, 0x12u, 99u, 100u, 101u});
+    Reject<std::invalid_argument>([&] { NativeRootArgumentWriter invalid(fixture.root, {}, {}, static_cast<AnyBox::Shader::NativeRootBindingMode>(255)); });
     auto reject = [&](auto modify) {
         auto invalid = resources;
         modify(invalid);
         Reject<std::exception>([&] { (void)BuildSerializedComputeRoots(invalid, fixture.root); });
     };
-    reject([](auto& values) { values[0].kind = NativeResourceKind::UnorderedAccess; });
+    reject([](auto& values) { values[0].kind = NativeResourceKind::Sampler; });
     reject([](auto& values) { values[0].descriptorWords = 2; });
-    reject([](auto& values) { values[0].firstShaderRegister = 9; });
+    reject([](auto& values) { values[0].tableOffset = 4; });
+    reject([](auto& values) { values[0].tableOffset = 25; });
     reject([](auto& values) { values[0].rootParameter = 99; });
     reject([](auto& values) { values[0].firstUserRegister = 128; });
-    reject([](auto& values) { values[1].tableOffset = 0; });
+    reject([](auto& values) { values[1].tableOffset = 20; });
     reject([](auto& values) { values[2].descriptorWords = 8; });
-    reject([](auto& values) { values[3].kind = NativeResourceKind::UnorderedAccess; });
+    reject([](auto& values) { values[3].kind = NativeResourceKind::Sampler; });
     reject([](auto& values) { values[3].descriptorWords = 8; });
     reject([](auto& values) { values[4].kind = NativeResourceKind::ShaderResource; });
     reject([](auto& values) { values[5].kind = NativeResourceKind::ShaderResource; });
@@ -47,4 +49,18 @@ void CheckSerializedComputeRoots() {
     std::array<NativeResourceBinding, 1> sampler{{{NativeResourceKind::Sampler, NativeRootKind::Table, 4, 6, 0, 4, 0, 0}}};
     auto samplerBindings = BuildSerializedComputeRoots(sampler, samplerRoot);
     Require(samplerBindings.front() == NativeRootBinding{NativeRootKind::Table, 4, 1, 6, 0, 0});
+    for (auto& resource : resources) resource.firstShaderRegister += 100;
+    roots = BuildSerializedComputeRoots(resources, fixture.root);
+    Reject<std::invalid_argument>([&] { NativeRootArgumentWriter invalid(fixture.root, roots, fixture.registers); });
+    NativeRootArgumentWriter linked(fixture.root, roots, fixture.registers, AnyBox::Shader::NativeRootBindingMode::SerializedSlots);
+    linked.Write(fixture.State(), output);
+    Require(output == std::array{0x12340u, 0x98765432u, 0x12u, 99u, 100u, 101u});
+    resources[0].kind = NativeResourceKind::UnorderedAccess;
+    resources[1].kind = NativeResourceKind::ShaderResource;
+    resources[3].kind = NativeResourceKind::UnorderedAccess;
+    resources[1].tableOffset = 24;
+    auto aliases = BuildSerializedComputeRoots(resources, fixture.root);
+    NativeRootArgumentWriter aliased(fixture.root, aliases, fixture.registers, AnyBox::Shader::NativeRootBindingMode::SerializedSlots);
+    aliased.Write(fixture.State(), output);
+    Require(output == std::array{0x12340u, 0x98765432u, 0x12u, 99u, 100u, 101u});
 }

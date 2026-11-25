@@ -4,11 +4,12 @@
 #include <optional>
 #include <stdexcept>
 
-AnyBox::Shader::NativeRootArgumentWriter::NativeRootArgumentWriter(const Graphics::Container::RootSignatureLayout& layout, std::span<const Graphics::Container::NativeRootBinding> roots, std::span<const std::uint32_t> registers) {
+AnyBox::Shader::NativeRootArgumentWriter::NativeRootArgumentWriter(const Graphics::Container::RootSignatureLayout& layout, std::span<const Graphics::Container::NativeRootBinding> roots, std::span<const std::uint32_t> registers, NativeRootBindingMode mode) {
     using namespace Graphics::Container;
+    if (mode != NativeRootBindingMode::LogicalRegisters && mode != NativeRootBindingMode::SerializedSlots) throw std::invalid_argument("Native root writer binding mode is invalid");
     ValidateNativeComputeRootLayout(layout);
     if (registers.size() > 128) throw std::length_error("Native root register selection exceeds the artifact ABI capacity");
-    for (const auto& binding : roots) ValidateNativeRootBinding(layout, binding);
+    for (const auto& binding : roots) ValidateNativeRootBinding(layout, binding, std::nullopt, mode);
     std::array<bool, 128> selected{};
     copies.reserve(registers.size());
     for (auto index : registers) {

@@ -3,7 +3,7 @@
 #include "../Buffers.hpp"
 #include <array>
 
-void AnyBox::Shader::BindNativeRawRootArguments(NativeComputeTranslation& translation, std::span<const Graphics::Container::NativeRootBinding> roots, const Graphics::Container::RootSignatureLayout& layout) {
+void AnyBox::Shader::BindNativeRawRootArguments(NativeComputeTranslation& translation, std::span<const Graphics::Container::NativeRootBinding> roots, const Graphics::Container::RootSignatureLayout& layout, NativeRootBindingMode mode) {
     using namespace ShaderRecompiler;
     if (translation.rootArgumentsBound) throw std::logic_error("Native root arguments were already bound");
     auto& program = translation.program;
@@ -19,7 +19,7 @@ void AnyBox::Shader::BindNativeRawRootArguments(NativeComputeTranslation& transl
     }
     std::vector<std::uint32_t> registers;
     for (std::uint32_t index = 0; index < selected.size(); ++index) if (selected[index]) registers.push_back(index);
-    (void)NativeRootArgumentWriter(layout, roots, registers);
+    (void)NativeRootArgumentWriter(layout, roots, registers, mode);
     PrepareNativeAddressLoads(program);
     MarkNativeBufferDescriptors(program);
     translation.rootArgumentsBound = true;

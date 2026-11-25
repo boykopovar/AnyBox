@@ -89,8 +89,8 @@ std::string AnyBox::Shader::Tools::AuditSerializedCompute(std::span<const std::b
     NativeFrontend frontend(view.GetCode(), state.waveSize);
     auto target = AuditTarget();
     auto translated = LowerNativeCompute(frontend, state.shader, ShaderRecompiler::ShaderFloatMode{state.shader.floatControl, state.shader.dx10Clamp, state.shader.ieeeMode, false}, target);
-    BindNativeRawRootArguments(translated, roots, layout);
+    BindNativeRawRootArguments(translated, roots, layout, NativeRootBindingMode::SerializedSlots);
     auto compiled = CompileCompute(translated.program, translated.input, target, {0, 0, 0, 128});
-    (void)NativeRootArgumentWriter(layout, roots, compiled.bindings.layout.userDataRegisters);
+    (void)NativeRootArgumentWriter(layout, roots, compiled.bindings.layout.userDataRegisters, NativeRootBindingMode::SerializedSlots);
     return Describe(compiled);
 }

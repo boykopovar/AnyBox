@@ -1,7 +1,7 @@
 #include <anybox/shader/NativeComputeArguments.hpp>
 #include <Optimization/ResourceMaterializer.hpp>
 
-AnyBox::Shader::NativeComputeArguments::NativeComputeArguments(const ShaderRecompiler::IrResourcePlan& plan, const Graphics::Container::RootSignatureLayout& layout, std::span<const Graphics::Container::NativeRootBinding> roots, std::span<const std::uint32_t> shaderRegisters) : plan(plan), registers(ReadResourceRegisters(plan, shaderRegisters)), writer(layout, roots, registers) {
+AnyBox::Shader::NativeComputeArguments::NativeComputeArguments(const ShaderRecompiler::IrResourcePlan& plan, const Graphics::Container::RootSignatureLayout& layout, std::span<const Graphics::Container::NativeRootBinding> roots, std::span<const std::uint32_t> shaderRegisters, NativeRootBindingMode mode) : plan(plan), registers(ReadResourceRegisters(plan, shaderRegisters)), writer(layout, roots, registers, mode) {
     if (plan.stage != ShaderRecompiler::IrShaderStage::Compute) throw std::invalid_argument("Native compute arguments require a compute resource plan");
 }
 

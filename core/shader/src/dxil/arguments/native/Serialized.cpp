@@ -37,12 +37,12 @@ std::vector<AnyBox::Graphics::Container::NativeRootBinding> AnyBox::Shader::Buil
                 if (resource.kind != NativeResourceKind::ConstantBuffer) throw std::invalid_argument("Serialized root constants are not a constant buffer");
                 binding.registerCount = parameter.wordCount;
             } else if (resource.rootKind == NativeRootKind::Descriptor) {
-                auto expected = resource.kind == NativeResourceKind::ShaderResource ? RootParameterKind::ShaderResource : resource.kind == NativeResourceKind::UnorderedAccess ? RootParameterKind::UnorderedAccess : RootParameterKind::ConstantBuffer;
-                if (resource.kind == NativeResourceKind::Sampler || parameter.kind != expected || resource.descriptorWords != 4) throw std::invalid_argument("Serialized direct descriptor resource class or width is invalid");
+                auto descriptor = parameter.kind == RootParameterKind::ShaderResource || parameter.kind == RootParameterKind::UnorderedAccess || parameter.kind == RootParameterKind::ConstantBuffer;
+                if (resource.kind == NativeResourceKind::Sampler || !descriptor || resource.descriptorWords != 4) throw std::invalid_argument("Serialized direct descriptor root parameter or width is invalid");
                 binding.registerCount = 2;
             } else throw std::runtime_error("Serialized compute resource and sampler heaps are not implemented");
         }
-        ValidateNativeRootBinding(layout, binding, kind);
+        ValidateNativeRootBinding(layout, binding, kind, NativeRootBindingMode::SerializedSlots);
         output.push_back(binding);
     }
     return output;
