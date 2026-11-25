@@ -77,12 +77,9 @@ void BindArguments(IrProgram& program, std::span<const AnyBox::Graphics::Contain
                 auto& memory = program.Resources().memoryInfo.at(value->Flags<MemoryFlags>().index);
                 if (!scalarBuffers && memory.kind == ResourceKind::ScalarBuffer) throw std::runtime_error("Native scalar buffer root argument accesses are not implemented");
             }
-            if (value->Opcode() == IrOpcode::LoadAddressU32) {
-                auto& memory = program.Resources().memoryInfo.at(value->Flags<MemoryFlags>().index);
-                if (memory.kind == ResourceKind::ScalarAddress) memory.kind = ResourceKind::Global;
-            }
         }
     }
+    PrepareNativeAddressLoads(program);
     MarkNativeBufferDescriptors(program);
 }
 }

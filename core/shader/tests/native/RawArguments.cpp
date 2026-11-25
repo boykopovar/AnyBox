@@ -34,6 +34,27 @@ void CheckNativeRawRootArguments() {
     NativeFrontend frontend(data);
     auto state = ReadNativeComputeState(data);
     auto target = BufferTests::Target();
+    for (std::uint32_t opcode = 0; opcode < 5; ++opcode) {
+        auto grouped = data;
+        auto width = 1u << opcode;
+        Set(grouped, 0x170, code[2] | (opcode << 18));
+        Set(grouped, 0x17C, 0x7E060200 | (10 + width - 1));
+        NativeFrontend selected(grouped);
+        auto translated = LowerNativeCompute(selected, state, ShaderRecompiler::ShaderFloatMode{state.floatControl, state.dx10Clamp, state.ieeeMode, false}, target);
+        BindNativeRawRootArguments(translated, roots, root);
+        bool last = false;
+        for (const auto& block : translated.program.Blocks()) {
+            for (const auto* value : block->Instructions()) {
+                if (value->Opcode() != ShaderRecompiler::IrOpcode::LoadAddressU32) continue;
+                const auto& memory = translated.program.Resources().memoryInfo.at(value->Flags<ShaderRecompiler::MemoryFlags>().index);
+                Require(memory.kind == ShaderRecompiler::ResourceKind::Global && memory.componentCount == 1 && memory.componentIndex == 0);
+                last |= memory.offset == (width - 1) * 4;
+            }
+        }
+        Require(last);
+        auto compiled = CompileCompute(translated.program, translated.input, target, {0, 0, 0, 128});
+        CheckSpirvValidation(compiled.code);
+    }
     auto translation = LowerNativeCompute(frontend, state, ShaderRecompiler::ShaderFloatMode{state.floatControl, state.dx10Clamp, state.ieeeMode, false}, target);
     BindNativeRawRootArguments(translation, roots, root);
     auto compiled = CompileCompute(translation.program, translation.input, target, {0, 0, 0, 128});

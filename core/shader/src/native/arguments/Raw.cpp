@@ -20,13 +20,7 @@ void AnyBox::Shader::BindNativeRawRootArguments(NativeComputeTranslation& transl
     std::vector<std::uint32_t> registers;
     for (std::uint32_t index = 0; index < selected.size(); ++index) if (selected[index]) registers.push_back(index);
     (void)NativeRootArgumentWriter(layout, roots, registers);
-    for (const auto& block : program.Blocks()) {
-        for (const auto* value : block->Instructions()) {
-            if (value->Opcode() != IrOpcode::LoadAddressU32) continue;
-            auto& memory = program.Resources().memoryInfo.at(value->Flags<MemoryFlags>().index);
-            if (memory.kind == ResourceKind::ScalarAddress) memory.kind = ResourceKind::Global;
-        }
-    }
+    PrepareNativeAddressLoads(program);
     MarkNativeBufferDescriptors(program);
     translation.rootArgumentsBound = true;
 }
