@@ -29,7 +29,7 @@ int main() {
         Require(XGSuggestSwizzleMode(&description, 0, &description.layout) == 0 && description.layout == mode);
         auto surface = AnyBox::Layout::ComputeTextureSurface(description);
         Require(surface.size == 32768 && surface.alignment == 4096 && surface.pixelPitch == 256 && surface.pixelHeight == 128);
-        for (auto format : {2u, 10u, 28u, 61u}) for (auto extent : {1u, 63u, 256u, 1024u}) {
+        for (auto format : {2u, 10u, 28u, 61u, 189u, 190u, 191u}) for (auto extent : {1u, 63u, 256u, 1024u}) {
             auto ordinary = description;
             ordinary.width = ordinary.height = extent;
             ordinary.format = format;
