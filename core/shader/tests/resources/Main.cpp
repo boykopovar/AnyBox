@@ -5,6 +5,7 @@
 void CheckBufferArguments();
 void CheckRootArguments();
 void CheckRootWriter();
+void CheckNativeRootWriter();
 
 namespace {
 void CheckBinding(unsigned category, unsigned stride) {
@@ -39,6 +40,7 @@ int main() {
         CheckBufferArguments();
         CheckRootArguments();
         CheckRootWriter();
+        CheckNativeRootWriter();
         for (unsigned category : {0u, 1u}) {
             CheckBinding(category, 0);
             CheckBinding(category, 32);
