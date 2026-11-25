@@ -1,4 +1,6 @@
 #include <anybox/vulkan/ComputePipeline.hpp>
+#include <anybox/vulkan/Spirv.hpp>
+#include <algorithm>
 
 AnyBox::Vulkan::ComputePipeline::ComputePipeline(Context& context, std::span<const std::uint32_t> code, std::uint32_t pushConstantSize, const char* entryPoint, std::span<const VkDescriptorSetLayout> descriptorLayouts, std::uint32_t dynamicOffsetCount) : context(context), pushConstantSize(pushConstantSize), descriptorSetCount(static_cast<std::uint32_t>(descriptorLayouts.size())), dynamicOffsetCount(dynamicOffsetCount) {
     if (code.size() < 5 || code.front() != 0x07230203 || !entryPoint || *entryPoint == '\0') throw std::invalid_argument("Vulkan compute shader code or entry point is invalid");
@@ -15,13 +17,17 @@ AnyBox::Vulkan::ComputePipeline::ComputePipeline(Context& context, std::span<con
         shader.pCode = code.data();
         Check(functions.createShaderModule(context.GetDevice(), &shader, nullptr, &module), "Create Vulkan compute shader module");
 
-        VkPushConstantRange range{VK_SHADER_STAGE_COMPUTE_BIT, 0, pushConstantSize};
+        auto declared = ReadSpirvPushConstants(code, entryPoint);
+        if (declared.stageFlags != VK_SHADER_STAGE_COMPUTE_BIT) throw std::invalid_argument("Vulkan compute module entry point has a different shader stage");
+        auto layoutSize = std::max(pushConstantSize, declared.offset + declared.size);
+        if (layoutSize > context.GetProperties().limits.maxPushConstantsSize) throw std::invalid_argument("Vulkan compute declared push constant block exceeds device limits");
+        VkPushConstantRange range{VK_SHADER_STAGE_COMPUTE_BIT, 0, layoutSize};
         VkPipelineLayoutCreateInfo layoutInfo{};
         layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         layoutInfo.setLayoutCount = descriptorSetCount;
         layoutInfo.pSetLayouts = descriptorLayouts.data();
-        layoutInfo.pushConstantRangeCount = pushConstantSize == 0 ? 0 : 1;
-        layoutInfo.pPushConstantRanges = pushConstantSize == 0 ? nullptr : &range;
+        layoutInfo.pushConstantRangeCount = layoutSize == 0 ? 0 : 1;
+        layoutInfo.pPushConstantRanges = layoutSize == 0 ? nullptr : &range;
         Check(functions.createPipelineLayout(context.GetDevice(), &layoutInfo, nullptr, &layout), "Create Vulkan compute pipeline layout");
 
         VkComputePipelineCreateInfo info{};

@@ -7,6 +7,7 @@
 #include <iostream>
 
 void CheckSpirvPushConstants();
+void CheckComputeDeclaredPushConstants(AnyBox::Vulkan::Context& context);
 void CheckInvalidGraphics(AnyBox::Vulkan::Context& context, AnyBox::Vulkan::RenderPass& pass, const VkGraphicsPipelineCreateInfo& description);
 
 namespace {
@@ -90,6 +91,7 @@ int main() {
         std::cout << "Vulkan graphics adapter: " << context.GetProperties().deviceName << '\n';
         Draw(context);
         CheckSpirvPushConstants();
+        CheckComputeDeclaredPushConstants(context);
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
