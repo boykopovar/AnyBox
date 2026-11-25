@@ -18,12 +18,16 @@ public:
     Vulkan::Context& GetContext() const noexcept { return context; }
     std::uint32_t GetDescriptorMask() const noexcept { return descriptorMask; }
     std::uint32_t GetShaderDataSize() const noexcept { return shaderDataSize; }
+    bool RequiresResources() const noexcept { return resources; }
+    std::span<const VkDescriptorSetLayoutBinding> GetDescriptorBindings() const noexcept { return bindings; }
 
 private:
     Vulkan::Context& context;
     VkDescriptorSetLayout descriptorLayout = VK_NULL_HANDLE;
     std::uint32_t descriptorMask = 0;
     std::uint32_t shaderDataSize = 0;
+    bool resources = false;
+    std::vector<VkDescriptorSetLayoutBinding> bindings;
     std::unique_ptr<Vulkan::ComputePipeline> pipeline;
 };
 }

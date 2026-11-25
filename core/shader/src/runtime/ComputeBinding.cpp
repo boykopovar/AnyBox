@@ -4,6 +4,7 @@
 using namespace AnyBox::Shader::Runtime;
 
 ComputeBinding::ComputeBinding(const ComputePipeline& pipeline, ComputeMemory& memory) : pipeline(pipeline) {
+    if (pipeline.RequiresResources()) throw std::invalid_argument("Compute resource descriptors require an explicit resource set");
     if (&memory.GetContext() != &pipeline.GetContext()) throw std::invalid_argument("Compute pipeline and memory belong to different Vulkan devices");
     if (pipeline.GetShaderDataSize()) data = std::make_unique<ComputeData>(pipeline, memory);
     else if (pipeline.GetDescriptorMask()) descriptors = std::make_unique<ComputeDescriptors>(pipeline, memory);

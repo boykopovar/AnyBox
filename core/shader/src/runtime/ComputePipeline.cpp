@@ -1,19 +1,19 @@
 #include <anybox/shader/runtime/ComputePipeline.hpp>
 #include "Requirements.hpp"
+#include "ResourceLayout.hpp"
 #include <vector>
 
 using namespace AnyBox::Shader::Runtime;
 
 ComputePipeline::ComputePipeline(AnyBox::Vulkan::Context& context, const ComputeArtifact& artifact) : context(context) {
     CheckRequirements(context, artifact);
-    std::vector<VkDescriptorSetLayoutBinding> bindings;
+    resources = artifact.memoryOffsetCount != 0;
+    bindings = BuildComputeResourceLayout(context, artifact.descriptors);
     for (const auto& descriptor : artifact.descriptors) {
-        if (descriptor.kind != MemoryTableBinding && descriptor.kind != FaultBufferBinding && descriptor.kind != ShaderDataBinding) throw std::runtime_error("Offline compute pipeline descriptor kind is not implemented");
-        if (!descriptor.resources.empty()) throw std::runtime_error("Offline compute pipeline BDA descriptor contains unexpected resource indices");
-        auto type = descriptor.kind == ShaderDataBinding ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-        bindings.push_back({descriptor.kind, type, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr});
-        if (descriptor.kind == ShaderDataBinding) shaderDataSize = artifact.memoryOffset * 4;
-        descriptorMask |= 1u << (descriptor.kind - MemoryTableBinding);
+        if (descriptor.kind == MemoryTableBinding || descriptor.kind == FaultBufferBinding || descriptor.kind == ShaderDataBinding) {
+            if (descriptor.kind == ShaderDataBinding) shaderDataSize = (artifact.memoryOffset + (artifact.memoryOffsetCount + 3) / 4) * 4;
+            descriptorMask |= 1u << (descriptor.kind - MemoryTableBinding);
+        } else resources = true;
     }
     try {
         std::vector<VkDescriptorSetLayout> layouts;
