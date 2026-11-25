@@ -7,8 +7,11 @@
 #include "serialized/Prepare.hpp"
 #include <algorithm>
 
-void AnyBox::Graphics::Tests::CheckSerializedPipeline(Device* device) {
+namespace AnyBox::Graphics::Tests {
+namespace {
+void CheckSerializedPipelineMode(Device* device, std::uint32_t control) {
     SerializedTests::ReferenceFixture source;
+    Fixtures::Set(source.records, 20, control);
     auto prepared = Shader::Tools::CompileSerializedCompute(source.Payload(), source.root, device->GetGpuContext().GetSubgroupProperties().subgroupSize);
     auto bytes = Shader::EncodeComputeArtifact(prepared.shader);
     auto resources = Shader::EncodeResourcePlan(prepared.resources, Shader::HashShader(std::span(bytes).first(80)));
@@ -63,4 +66,11 @@ void AnyBox::Graphics::Tests::CheckSerializedPipeline(Device* device) {
     cache.Save(prepared.shader, resources);
     Reject<std::invalid_argument>([&] { create(device, &description, PipelineStateId, &output); });
     Require(output == nullptr, "Corrupt serialized resource cache retained its output");
+}
+}
+}
+
+void AnyBox::Graphics::Tests::CheckSerializedPipeline(Device* device) {
+    CheckSerializedPipelineMode(device, 0x440);
+    CheckSerializedPipelineMode(device, 0x8440);
 }

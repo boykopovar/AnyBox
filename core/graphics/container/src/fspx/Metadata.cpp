@@ -12,8 +12,10 @@ AnyBox::Graphics::Container::SerializedComputeMetadata AnyBox::Graphics::Contain
     if (data.size() < 56 || (data.size() - 24) % 32 != 0) throw std::invalid_argument("Xbox serialized compute metadata size is invalid");
     if (ReadInteger(data, 0) != 0x403) throw std::runtime_error("Xbox serialized compute metadata version is not implemented");
     if (ReadInteger(data, 4) != data.size() - 20 || ReadInteger(data, 8) != code.size() / 4) throw std::invalid_argument("Xbox serialized compute metadata sizes disagree with their payloads");
-    if (ReadInteger(data, 12) != 0 || ReadInteger(data, 16) != 0 || (ReadInteger(data, 20) & 65535) != 0x440) throw std::runtime_error("Xbox serialized compute metadata control mode is not implemented");
+    auto control = static_cast<std::uint16_t>(ReadInteger(data, 20));
+    if (ReadInteger(data, 12) != 0 || ReadInteger(data, 16) != 0 || (control != 0x440 && control != 0x8440)) throw std::runtime_error("Xbox serialized compute metadata control mode is not implemented");
     SerializedComputeMetadata output{};
+    output.control = control;
     bool declarations = false;
     bool hash = false;
     for (std::size_t offset = 24; offset < data.size(); offset += 32) {

@@ -5,6 +5,7 @@
 
 namespace AnyBox::Graphics::Container {
 struct SerializedComputeMetadata {
+    std::uint16_t control;
     std::array<std::byte, 16> shaderHash;
     std::vector<NativeResourceBinding> resources;
 };

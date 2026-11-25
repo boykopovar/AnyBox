@@ -16,6 +16,14 @@ void Check(std::uint32_t subgroup) {
     auto signature = files.Save("root.dxbc", fixture.root);
     auto compiled = CompileSerializedCompute(payload, fixture.root, subgroup);
     auto key = compiled.shader.sourceHash;
+    auto alternate = fixture;
+    Set(alternate.records, 20, 0x8440);
+    auto alternateCompiled = CompileSerializedCompute(alternate.Payload(), alternate.root, subgroup);
+    Require(alternateCompiled.shader.sourceHash != key);
+    auto expected = compiled.shader;
+    expected.sourceHash = alternateCompiled.shader.sourceHash;
+    Require(expected == alternateCompiled.shader);
+    Require(EncodeResourcePlan(compiled.resources, {}) == EncodeResourcePlan(alternateCompiled.resources, {}));
     Require(compiled.shader.hostSubgroupSize == subgroup && compiled.shader.waveSize == 32);
     Require(compiled.shader.threads == std::array<std::uint32_t, 3>{4, 2, 2});
     Require(compiled.shader.sharedMemoryBytes == 1024);
