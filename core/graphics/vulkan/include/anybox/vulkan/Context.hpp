@@ -34,6 +34,7 @@ public:
     VkPhysicalDevice GetPhysicalDevice() const noexcept { return physicalDevice; }
     const DeviceFunctions& GetFunctions() const noexcept { return deviceFunctions; }
     const VkPhysicalDeviceProperties& GetProperties() const noexcept { return properties; }
+    const VkPhysicalDeviceFeatures& GetEnabledFeatures() const noexcept { return enabledFeatures; }
     const VkPhysicalDeviceSubgroupProperties& GetSubgroupProperties() const noexcept { return subgroups; }
     const VkPhysicalDeviceFloatControlsProperties& GetFloatControls() const noexcept { return floatControls; }
     const VkPhysicalDeviceMemoryProperties& GetMemoryProperties() const noexcept { return memoryProperties; }
@@ -66,6 +67,7 @@ private:
     InstanceFunctions instanceFunctions{};
     DeviceFunctions deviceFunctions{};
     VkPhysicalDeviceProperties properties{};
+    VkPhysicalDeviceFeatures enabledFeatures{};
     VkPhysicalDeviceSubgroupProperties subgroups{};
     VkPhysicalDeviceFloatControlsProperties floatControls{};
     VkPhysicalDeviceMemoryProperties memoryProperties{};

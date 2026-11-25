@@ -40,4 +40,5 @@ void CheckLayout(Context& context, Storage& storage, std::span<const std::uint64
 void CheckImages(Context& context);
 void CheckImageViews(Context& context);
 std::vector<std::uint32_t> CompileCompute(const char* source);
+std::vector<std::uint32_t> CompileShader(const char* source, VkShaderStageFlagBits stage);
 }

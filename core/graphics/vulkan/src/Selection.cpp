@@ -55,12 +55,16 @@ void AnyBox::Vulkan::Context::createDevice(std::uint32_t queueCount) {
     if (!address.bufferDeviceAddress) throw AdapterIncompatible("Vulkan buffer device addresses are unsupported");
     if (!features.features.shaderInt64) throw AdapterIncompatible("Vulkan shader 64-bit integers are unsupported");
     if (!timeline.timelineSemaphore) throw AdapterIncompatible("Vulkan timeline semaphores are unsupported");
-    VkPhysicalDeviceFeatures enabled{};
+    auto& enabled = enabledFeatures;
     enabled.shaderInt64 = VK_TRUE;
     enabled.textureCompressionBC = features.features.textureCompressionBC;
     enabled.textureCompressionETC2 = features.features.textureCompressionETC2;
     enabled.textureCompressionASTC_LDR = features.features.textureCompressionASTC_LDR;
     enabled.imageCubeArray = features.features.imageCubeArray;
+    enabled.shaderClipDistance = features.features.shaderClipDistance;
+    enabled.shaderCullDistance = features.features.shaderCullDistance;
+    enabled.vertexPipelineStoresAndAtomics = features.features.vertexPipelineStoresAndAtomics;
+    enabled.fragmentStoresAndAtomics = features.features.fragmentStoresAndAtomics;
     cubeArrays = enabled.imageCubeArray != VK_FALSE;
     byteStorage = storage.storageBuffer8BitAccess != VK_FALSE;
     storage.uniformAndStorageBuffer8BitAccess = VK_FALSE;

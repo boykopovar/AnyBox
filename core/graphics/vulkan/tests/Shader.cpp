@@ -10,12 +10,17 @@ public:
 };
 }
 
-std::vector<std::uint32_t> AnyBox::Vulkan::Tests::CompileCompute(const char* source) {
+std::vector<std::uint32_t> AnyBox::Vulkan::Tests::CompileShader(const char* source, VkShaderStageFlagBits stage) {
     static Process process;
-    if (!source) throw std::invalid_argument("Test compute shader source is null");
+    if (!source) throw std::invalid_argument("Test shader source is null");
     glslang_input_t input{};
     input.language = GLSLANG_SOURCE_GLSL;
-    input.stage = GLSLANG_STAGE_COMPUTE;
+    switch (stage) {
+    case VK_SHADER_STAGE_COMPUTE_BIT: input.stage = GLSLANG_STAGE_COMPUTE; break;
+    case VK_SHADER_STAGE_VERTEX_BIT: input.stage = GLSLANG_STAGE_VERTEX; break;
+    case VK_SHADER_STAGE_FRAGMENT_BIT: input.stage = GLSLANG_STAGE_FRAGMENT; break;
+    default: throw std::invalid_argument("Test shader stage is not implemented");
+    }
     input.client = GLSLANG_CLIENT_VULKAN;
     input.client_version = GLSLANG_TARGET_VULKAN_1_2;
     input.target_language = GLSLANG_TARGET_SPV;
@@ -42,4 +47,8 @@ std::vector<std::uint32_t> AnyBox::Vulkan::Tests::CompileCompute(const char* sou
     if (code.empty()) throw std::runtime_error("Test GLSL compiler produced no SPIR-V");
     glslang_program_SPIRV_get(program.get(), code.data());
     return code;
+}
+
+std::vector<std::uint32_t> AnyBox::Vulkan::Tests::CompileCompute(const char* source) {
+    return CompileShader(source, VK_SHADER_STAGE_COMPUTE_BIT);
 }

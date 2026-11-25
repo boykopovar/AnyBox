@@ -48,6 +48,14 @@ void AnyBox::Vulkan::Context::loadDeviceFunctions() {
     ANYBOX_VULKAN_FUNCTION(createPipelineLayout, vkCreatePipelineLayout);
     ANYBOX_VULKAN_FUNCTION(destroyPipelineLayout, vkDestroyPipelineLayout);
     ANYBOX_VULKAN_FUNCTION(createComputePipelines, vkCreateComputePipelines);
+    ANYBOX_VULKAN_FUNCTION(createGraphicsPipelines, vkCreateGraphicsPipelines);
+    ANYBOX_VULKAN_FUNCTION(createRenderPass, vkCreateRenderPass);
+    ANYBOX_VULKAN_FUNCTION(destroyRenderPass, vkDestroyRenderPass);
+    ANYBOX_VULKAN_FUNCTION(createFramebuffer, vkCreateFramebuffer);
+    ANYBOX_VULKAN_FUNCTION(destroyFramebuffer, vkDestroyFramebuffer);
+    ANYBOX_VULKAN_FUNCTION(beginRenderPass, vkCmdBeginRenderPass);
+    ANYBOX_VULKAN_FUNCTION(endRenderPass, vkCmdEndRenderPass);
+    ANYBOX_VULKAN_FUNCTION(draw, vkCmdDraw);
     ANYBOX_VULKAN_FUNCTION(destroyPipeline, vkDestroyPipeline);
     ANYBOX_VULKAN_FUNCTION(bindPipeline, vkCmdBindPipeline);
     ANYBOX_VULKAN_FUNCTION(pushConstants, vkCmdPushConstants);

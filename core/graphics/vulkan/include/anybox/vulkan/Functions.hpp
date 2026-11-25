@@ -57,6 +57,14 @@ struct DeviceFunctions {
     PFN_vkCreatePipelineLayout createPipelineLayout;
     PFN_vkDestroyPipelineLayout destroyPipelineLayout;
     PFN_vkCreateComputePipelines createComputePipelines;
+    PFN_vkCreateGraphicsPipelines createGraphicsPipelines;
+    PFN_vkCreateRenderPass createRenderPass;
+    PFN_vkDestroyRenderPass destroyRenderPass;
+    PFN_vkCreateFramebuffer createFramebuffer;
+    PFN_vkDestroyFramebuffer destroyFramebuffer;
+    PFN_vkCmdBeginRenderPass beginRenderPass;
+    PFN_vkCmdEndRenderPass endRenderPass;
+    PFN_vkCmdDraw draw;
     PFN_vkDestroyPipeline destroyPipeline;
     PFN_vkCmdBindPipeline bindPipeline;
     PFN_vkCmdPushConstants pushConstants;
