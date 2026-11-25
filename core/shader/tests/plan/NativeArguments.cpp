@@ -1,4 +1,4 @@
-#include <anybox/shader/NativeComputeArguments.hpp>
+#include <anybox/shader/NativeShaderArguments.hpp>
 #include "../native/RootFixture.hpp"
 #include <Optimization/ResourceMaterializer.hpp>
 #include <algorithm>
@@ -31,7 +31,7 @@ void CheckSerializedTableMemory() {
     auto plan = ResourceMaterializer{}.ExtractPlan(translation.program);
     RootSignatureLayout layout{2, 0, 0, {{RootParameterKind::Table, 0, 0, 0, 0, 0, {{RootRangeKind::ConstantBuffer, 1, 0, 0, 0, 0}}}, {RootParameterKind::Constants, 0, 1, 0, 1, 0, {}}}};
     std::array<NativeRootBinding, 2> roots{{{NativeRootKind::Table, 8, 1, 99, 0, 0}, {NativeRootKind::Constants, 0, 1, 1, 1, 1}}};
-    NativeComputeArguments arguments(plan, layout, roots, {}, NativeRootBindingMode::SerializedSlots);
+    NativeShaderArguments arguments(plan, layout, roots, {}, NativeRootBindingMode::SerializedSlots);
     AnyBox::Graphics::Commands::RootState state(layout);
     state.Write(0, 0, std::array{0x10000u});
     state.Write(1, 0, std::array{0u});
@@ -63,12 +63,14 @@ void CheckNativeComputeArguments() {
     std::array<NativeRootBinding, 2> roots{{{NativeRootKind::Descriptor, 0, 2, 0, 0, 0}, {NativeRootKind::Constants, 0, 10, 1, 7, 1}}};
     std::array<std::uint32_t, 2> shaderRegisters{16, 7};
     Require(ReadResourceRegisters(plan, shaderRegisters) == std::vector<std::uint32_t>{0, 1, 7, 16});
-    NativeComputeArguments arguments(plan, layout, roots, shaderRegisters);
+    NativeShaderArguments arguments(plan, layout, roots, shaderRegisters);
+    Require(arguments.GetSystemRegisters().empty());
     AnyBox::Graphics::Commands::RootState state(layout);
     Reject<std::logic_error>([&] { (void)arguments.ReadUserData(state); });
     state.Write(0, 0, std::array{0x10000u, 0u});
     state.Write(1, 0, std::array<std::uint32_t, 10>{11, 0, 0, 0, 0, 0, 0, 0, 0, 99});
     auto values = arguments.ReadUserData(state);
+    Reject<std::invalid_argument>([&] { (void)arguments.ReadUserData(state, std::array{1u}); });
     Require(values[0] == 0x10000 && values[1] == 0 && values[7] == 11 && values[16] == 99);
     Require(std::ranges::count(values, 0u) == 125);
     Memory memory;
@@ -91,9 +93,9 @@ void CheckNativeComputeArguments() {
     Reject<std::runtime_error>([&] { (void)arguments.Materialize(state, runtime, snapshot); });
     Reject<std::invalid_argument>([&] { (void)ReadResourceRegisters(plan, std::array{128u}); });
     Reject<std::invalid_argument>([&] { (void)ReadResourceRegisters(plan, std::array{7u, 7u}); });
-    Reject<std::runtime_error>([&] { NativeComputeArguments invalid(plan, layout, {}, shaderRegisters); });
-    plan.stage = IrShaderStage::Pixel;
-    Reject<std::invalid_argument>([&] { NativeComputeArguments invalid(plan, layout, roots, shaderRegisters); });
+    Reject<std::runtime_error>([&] { NativeShaderArguments invalid(plan, layout, {}, shaderRegisters); });
+    plan.stage = static_cast<IrShaderStage>(255);
+    Reject<std::invalid_argument>([&] { NativeShaderArguments invalid(plan, layout, roots, shaderRegisters); });
     plan.stage = IrShaderStage::Compute;
     plan.userDataBase = 2;
     Reject<std::invalid_argument>([&] { (void)ReadResourceRegisters(plan, {}); });

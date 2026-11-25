@@ -6,6 +6,7 @@
 #include <array>
 
 void CheckNativeComputeArguments();
+void CheckNativeGraphicsArguments();
 
 namespace {
 using namespace AnyBox::Shader;
@@ -102,5 +103,5 @@ void Check() {
 }
 
 int main() {
-    return AnyBox::Tests::Run([] { Check(); CheckNativeComputeArguments(); });
+    return AnyBox::Tests::Run([] { Check(); CheckNativeComputeArguments(); CheckNativeGraphicsArguments(); });
 }
