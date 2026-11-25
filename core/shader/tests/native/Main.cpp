@@ -7,6 +7,7 @@
 void CheckNativeCompute();
 void CheckRawNativeFrontend();
 void CheckNativeHashPrologue();
+void CheckNativeRawRootArguments();
 void CheckNativePixel();
 void CheckNativeLinkage();
 void CheckNativeVertex();
@@ -31,6 +32,7 @@ int main() {
         CheckNativeCompute();
         CheckRawNativeFrontend();
         CheckNativeHashPrologue();
+        CheckNativeRawRootArguments();
         CheckNativePixel();
         CheckNativeLinkage();
         CheckNativeVertex();
