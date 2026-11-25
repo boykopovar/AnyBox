@@ -9,12 +9,19 @@
 #include "graphics/Options.hpp"
 #include <anybox/shader/Resources.hpp>
 #include <anybox/shader/Compute.hpp>
+#include <anybox/graphics/container/SerializedStage.hpp>
 #include <array>
 #include <iostream>
 #include <string_view>
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 4 && std::string_view(argv[1]) == "--serialized-stage-info") {
+            auto metadata = AnyBox::Graphics::Container::ReadSerializedStageMetadata(AnyBox::Shader::Tools::ReadInput(argv[2]), AnyBox::Shader::Tools::ReadInput(argv[3]));
+            std::cout << "code_words=" << metadata.codeWords << " control=" << metadata.control << " resources=" << metadata.resources.size() << " declarations=" << metadata.declarations.size() << '\n';
+            if (!std::cout) throw std::runtime_error("Cannot write serialized stage information");
+            return 0;
+        }
         if ((argc == 5 || argc == 6) && (std::string_view(argv[1]) == "--prepare-serialized-compute" || std::string_view(argv[1]) == "--check-serialized-compute")) {
             auto subgroup = argc == 6 ? std::string_view(argv[5]) : "32";
             if (subgroup != "32" && subgroup != "64") throw std::invalid_argument("Serialized compute subgroup size must be 32 or 64");

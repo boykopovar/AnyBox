@@ -17,6 +17,7 @@ void CheckEmbeddedDxbc();
 void CheckFspx();
 void CheckFspxDispatch();
 void CheckFspxMetadata();
+void CheckSerializedStageMetadata();
 
 namespace {
 using namespace AnyBox::Graphics::Container;
@@ -96,5 +97,6 @@ int main() {
         CheckFspx();
         CheckFspxDispatch();
         CheckFspxMetadata();
+        CheckSerializedStageMetadata();
     });
 }
