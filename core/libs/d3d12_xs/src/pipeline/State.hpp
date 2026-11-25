@@ -8,20 +8,23 @@ inline constexpr Guid PipelineStateId{0x765A30F3, 0xF624, 0x4C6F, {0xA8, 0x28, 0
 const ObjectTable& GetPipelineTable();
 class OfflinePipeline;
 class OfflineGraphicsPipeline;
+class NativeComputePipeline;
 
 class alignas(16) PipelineState : public ObjectLifetime<PipelineState, ManagedProperties> {
 public:
     PipelineState(ID3D12PipelineState* host, Device* device, RootSignature* root);
     PipelineState(std::unique_ptr<OfflinePipeline> offline, Device* device, RootSignature* root);
     PipelineState(std::unique_ptr<OfflineGraphicsPipeline> graphics, Device* device, RootSignature* root);
+    PipelineState(std::unique_ptr<NativeComputePipeline> native, Device* device, RootSignature* root);
     ~PipelineState();
     ID3D12PipelineState* GetHost() const {
         if (!host) throw std::logic_error("Offline Vulkan pipeline has no host D3D12 pipeline state");
         return host;
     }
     bool IsOffline() const noexcept { return host == nullptr; }
-    const OfflineGraphicsPipeline* GetGraphics() const noexcept { return graphics; }
-    const OfflinePipeline* GetOffline() const noexcept { return offline; }
+    const OfflineGraphicsPipeline* GetGraphics() const noexcept { return backendKind == BackendKind::Graphics ? backend.graphics : nullptr; }
+    const OfflinePipeline* GetOffline() const noexcept { return backendKind == BackendKind::Compute ? backend.offline : nullptr; }
+    const NativeComputePipeline* GetNativeCompute() const noexcept { return backendKind == BackendKind::NativeCompute ? backend.native : nullptr; }
     const std::array<std::uint32_t, 8>& GetInlineCommands() const noexcept { return inlineCommands; }
     static PipelineState* From(void* object, Device* owner);
     PrivateData& GetPrivateDataStore() { return privateData.Get(); }
@@ -42,8 +45,13 @@ private:
     ID3D12PipelineState* host;
     Device* device;
     RootSignature* root;
-    OfflinePipeline* offline = nullptr;
-    OfflineGraphicsPipeline* graphics = nullptr;
+    enum class BackendKind : std::uint64_t { Host, Compute, Graphics, NativeCompute };
+    union Backend {
+        OfflinePipeline* offline = nullptr;
+        OfflineGraphicsPipeline* graphics;
+        NativeComputePipeline* native;
+    } backend;
+    BackendKind backendKind = BackendKind::Host;
     PrivateDataSlot privateData;
     void initialize();
 };

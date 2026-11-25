@@ -25,6 +25,7 @@ namespace AnyBox::Vulkan { class Context; class Buffer; }
 namespace AnyBox::Descriptor { struct SamplerDescription; }
 
 namespace AnyBox::Graphics {
+struct SerializedComputeDescription;
 using DeviceMethod = std::array<std::byte, sizeof(void (*)())>;
 using ObjectTable = std::array<DeviceMethod, 128>;
 using DeviceTable = std::array<DeviceMethod, 256>;
@@ -88,6 +89,7 @@ public:
     static HRESULT CreateRootSignature(Device* self, std::uint32_t nodeMask, const void* data, std::size_t size, const Guid& interfaceId, void** signature);
     static HRESULT CreatePipelineStateX(Device* self, const D3D12_PIPELINE_STATE_STREAM_DESC* description, const Guid& interfaceId, void** pipeline);
     static HRESULT CreateComputePipelineStateX(Device* self, const D3D12_COMPUTE_PIPELINE_STATE_DESC* description, std::uint32_t extensionCount, const void* extensions, const Guid& interfaceId, void** pipeline);
+    static HRESULT DeserializeComputePipelineStateX(Device* self, const SerializedComputeDescription* description, const Guid& interfaceId, void** pipeline);
     static HRESULT CreateDescriptorHeap(Device* self, const D3D12_DESCRIPTOR_HEAP_DESC* description, const Guid& interfaceId, void** heap);
     static void CreateShaderResourceView(Device* self, void* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* description, std::uint64_t destination);
     static void CreateShaderResourceViewX(Device* self, const D3D12_RESOURCE_DESC* resource, const XboxShaderViewDescription* description, std::uint64_t destination);

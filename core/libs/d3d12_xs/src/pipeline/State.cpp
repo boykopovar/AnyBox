@@ -1,6 +1,7 @@
 #include "State.hpp"
 #include "Offline.hpp"
 #include "graphics/Offline.hpp"
+#include "native/Pipeline.hpp"
 #include <anybox/graphics/commands/Inline.hpp>
 
 AnyBox::Graphics::PipelineState::PipelineState(ID3D12PipelineState* host, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(host), device(device), root(root) {
@@ -9,12 +10,20 @@ AnyBox::Graphics::PipelineState::PipelineState(ID3D12PipelineState* host, Device
 
 AnyBox::Graphics::PipelineState::PipelineState(std::unique_ptr<OfflinePipeline> offline, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(nullptr), device(device), root(root) {
     initialize();
-    this->offline = offline.release();
+    backend.offline = offline.release();
+    backendKind = BackendKind::Compute;
 }
 
 AnyBox::Graphics::PipelineState::PipelineState(std::unique_ptr<OfflineGraphicsPipeline> graphics, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(nullptr), device(device), root(root) {
     initialize();
-    this->graphics = graphics.release();
+    backend.graphics = graphics.release();
+    backendKind = BackendKind::Graphics;
+}
+
+AnyBox::Graphics::PipelineState::PipelineState(std::unique_ptr<NativeComputePipeline> native, Device* device, RootSignature* root) : vtable(&GetPipelineTable()), host(nullptr), device(device), root(root) {
+    initialize();
+    backend.native = native.release();
+    backendKind = BackendKind::NativeCompute;
 }
 
 void AnyBox::Graphics::PipelineState::initialize() {
@@ -36,8 +45,9 @@ AnyBox::Graphics::PipelineState* AnyBox::Graphics::PipelineState::From(void* obj
 
 AnyBox::Graphics::PipelineState::~PipelineState() {
     privateData.Reset();
-    delete offline;
-    delete graphics;
+    if (backendKind == BackendKind::Compute) delete backend.offline;
+    if (backendKind == BackendKind::Graphics) delete backend.graphics;
+    if (backendKind == BackendKind::NativeCompute) delete backend.native;
     if (host) host->Release();
     RootSignature::Release(root);
     Device::Release(device);

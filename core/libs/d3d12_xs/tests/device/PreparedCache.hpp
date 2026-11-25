@@ -29,6 +29,10 @@ public:
     void Save(const Shader::ComputeArtifact& artifact) {
         write(Shader::DigestName(artifact.sourceHash) + ".abxc", Shader::EncodeComputeArtifact(artifact));
     }
+    void Save(const Shader::ComputeArtifact& artifact, std::span<const std::byte> resources) {
+        Save(artifact);
+        write(Shader::DigestName(artifact.sourceHash) + ".abxr", resources);
+    }
     void Save(const Shader::GraphicsArtifact& artifact) {
         Save(artifact.GetKey(), artifact);
     }

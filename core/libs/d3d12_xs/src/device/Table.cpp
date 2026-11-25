@@ -44,6 +44,7 @@ AnyBox::Graphics::DeviceTable MakeTable(std::index_sequence<TSlots...>) {
     result[48] = MethodAddress(&Device::CreateCommandQueueX);
     result[61] = MethodAddress(&Device::CreateSamplerX);
     result[62] = MethodAddress(&Device::CreateComputePipelineStateX);
+    result[67] = MethodAddress(&Device::DeserializeComputePipelineStateX);
     result[70] = MethodAddress(&Device::CreateShaderResourceViewX);
     result[73] = MethodAddress(&Device::CreateCommandListX);
     result[74] = MethodAddress(&Device::RegisterPagePoolX);

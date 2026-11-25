@@ -14,6 +14,7 @@ void CheckPipelineStreams(Device* device, RootSignature* root, std::span<const s
 void CheckComputeRoots(Device* device);
 void CheckComputeInline(Device* device);
 void CheckPreparedPipeline(Device* device);
+void CheckSerializedPipeline(Device* device);
 void CheckPreparedDispatch(Device* device);
 inline void Require(bool condition, const char* message) {
     if (!condition) throw std::runtime_error(message);

@@ -1,0 +1,7 @@
+if(BUILD_TESTING)
+    target_sources(d3d12_device_tests PRIVATE tests/device/SerializedPipeline.cpp)
+    target_sources(d3d12_device_tests PRIVATE "${PROJECT_SOURCE_DIR}/tools/shader/serialized/Compile.cpp" "${PROJECT_SOURCE_DIR}/tools/shader/Artifact.cpp")
+    target_sources(d3d12_device_tests PRIVATE "${PROJECT_SOURCE_DIR}/core/graphics/container/tests/NativeFixtures.cpp")
+    target_include_directories(d3d12_device_tests PRIVATE "${PROJECT_SOURCE_DIR}/tools/shader/tests" "${PROJECT_SOURCE_DIR}/tools/shader" "${PROJECT_SOURCE_DIR}/core/graphics/container/tests")
+    target_link_libraries(d3d12_device_tests PRIVATE anybox_native_shader anybox_shader_plan libdeflate_static)
+endif()
