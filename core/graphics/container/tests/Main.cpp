@@ -18,6 +18,8 @@ void CheckFspx();
 void CheckFspxDispatch();
 void CheckFspxMetadata();
 void CheckSerializedStageMetadata();
+void CheckSerializedGraphicsFixedState();
+void CheckSerializedGraphicsBlend();
 
 namespace {
 using namespace AnyBox::Graphics::Container;
@@ -98,5 +100,7 @@ int main() {
         CheckFspxDispatch();
         CheckFspxMetadata();
         CheckSerializedStageMetadata();
+        CheckSerializedGraphicsFixedState();
+        CheckSerializedGraphicsBlend();
     });
 }

@@ -16,6 +16,11 @@
 
 int main(int argc, char** argv) {
     try {
+        if (argc == 4 && std::string_view(argv[1]) == "--serialized-graphics-state") {
+            std::cout << AnyBox::Shader::Tools::InspectSerializedGraphicsState(AnyBox::Shader::Tools::ReadInput(argv[2]), AnyBox::Shader::Tools::ReadInput(argv[3]));
+            if (!std::cout) throw std::runtime_error("Cannot write serialized graphics state");
+            return 0;
+        }
         if (argc == 6 && std::string_view(argv[1]) == "--serialized-stage-roots") {
             auto stage = std::string_view(argv[5]);
             if (stage != "vertex" && stage != "pixel") throw std::invalid_argument("Serialized graphics stage must be vertex or pixel");
