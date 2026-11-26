@@ -1,0 +1,44 @@
+name: Bug report
+description: Report an AnyBox build, test, or runtime failure.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Search existing issues and pull requests for the same symptom or error text.
+        Share only diagnostics you can post publicly.
+  - type: input
+    id: revision
+    attributes:
+      label: AnyBox revision
+      description: Include the commit, tag, or pull request you built.
+      placeholder: Output of git rev-parse --short HEAD
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Windows and toolchain
+      description: Include the Windows version, compiler, and Debug or Release configuration if known.
+      placeholder: Windows 11 x64, MSVC 19.44, Release
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the command, CTest test name, or launch step where the problem appears.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Describe what you expected to happen and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Error or diagnostic output
+      description: Paste the first relevant error, missing export, or a short excerpt from the log if available.
+      render: text
