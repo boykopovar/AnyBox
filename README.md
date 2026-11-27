@@ -31,6 +31,18 @@ Users must supply their own application executables and data.
 
 AnyBox is an independent project and is not affiliated with, authorized or endorsed by Microsoft. Xbox is a trademark of Microsoft Corporation.
 
+## Tracing unimplemented exports
+
+Set `ANYBOX_TRACE_FILE` in the shell you use to launch a test program:
+
+```powershell
+$env:ANYBOX_TRACE_FILE = Join-Path $PWD 'anybox-trace.tsv'
+```
+
+Each recorded call includes its UTC timestamp, process ID, thread ID, and `DLL!export` name. AnyBox creates the trace on the first recorded call and appends to an existing file. The parent directory must exist and be writable. The original exception still propagates, including if the trace cannot be written.
+
+Choose a new filename to isolate a run. Use `Remove-Item Env:ANYBOX_TRACE_FILE` to turn off tracing for subsequent launches.
+
 ## License
 
 This project is licensed under the [GNU General Public License version 2 only](LICENSE).
