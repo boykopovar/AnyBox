@@ -11,6 +11,8 @@ Seven system libraries have been created. Implementations exist for 37 exported 
 
 Unimplemented functions throw a C++ exception. Cross-library stack unwinding and destructor execution are verified by tests. The test app reaches an unimplemented function and terminates with an unhandled MSVC-compatible C++ exception; its call stack is visible in the debugger. Destructor execution during unwinding through the test app's code has not been verified.
 
+See [Checking PE imports](tools/README.md) to compare an executable or companion DLL with the exports in a local AnyBox build.
+
 ## Building
 
 AnyBox uses standard C++20 and can be built with any conforming compiler targeting 64-bit Windows. MSVC or `clang-cl` with the MSVC runtime is recommended for ABI compatibility and correct stack unwinding of diagnostic C++ exceptions through test app code.
