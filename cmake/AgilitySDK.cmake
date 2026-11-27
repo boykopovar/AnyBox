@@ -24,6 +24,8 @@ if(NOT coreHash STREQUAL "8a23d826b25b4329522ff451cb52b7f2b34d7f2913cfeb878371ce
     message(FATAL_ERROR "Microsoft Agility SDK runtime files have been modified")
 endif()
 
+install(FILES "${agilityCore}" "${agilityLayers}" "${agilityLicense}" DESTINATION D3D12 COMPONENT AnyBoxRuntime)
+
 add_custom_target(anybox_d3d12_runtime
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${ANYBOX_RUNTIME_DIRECTORY}/D3D12"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${agilityCore}" "${ANYBOX_RUNTIME_DIRECTORY}/D3D12/D3D12Core.dll"

@@ -23,6 +23,14 @@ Unmodified executables require Windows Developer Mode for process-local SDK acti
 
 `ANYBOX_REQUIRE_D3D12_VALIDATION=ON` enables the graphics validation test. It requires the Windows graphics debug tools, including `DXGIDebug.dll`. `ANYBOX_DXGI_DEBUG_LIBRARY` optionally supplies an application-local copy of that library.
 
+After building, stage the runtime DLLs in a separate directory:
+
+```powershell
+cmake --install build --config Release --component AnyBoxRuntime --prefix ./anybox-runtime
+```
+
+Use the configuration you built. The directory contains the AnyBox DLLs, the Agility runtime and its license under `D3D12/`, and the compiler runtime DLLs for MinGW GCC builds. MSVC builds require the [x64 Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist).
+
 ## Disclaimer
 
 The project is intended for interoperability, research and preservation. Application executables and data, firmware, cryptographic keys and proprietary console SDK libraries are not distributed with the project.

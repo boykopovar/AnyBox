@@ -22,6 +22,7 @@ function(anybox_add_system_library target)
         ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/$<CONFIG>"
         WINDOWS_EXPORT_ALL_SYMBOLS OFF
     )
+    install(TARGETS ${target} RUNTIME DESTINATION . COMPONENT AnyBoxRuntime)
     anybox_add_compiler_runtime(${target})
     add_dependencies(libs ${target})
 endfunction()
